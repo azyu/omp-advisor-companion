@@ -1,0 +1,62 @@
+{
+  "name": "omp-advisor-companion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "omp": {
+    "extensions": ["./src/index.ts"],
+    "settings": {
+      "imagePath": {
+        "type": "string",
+        "default": "",
+        "env": "OMP_ADVISOR_COMPANION_IMAGE",
+        "description": "Absolute or project-cwd-relative PNG image path."
+      },
+      "imageMaxWidth": {
+        "type": "number",
+        "default": 20,
+        "min": 8,
+        "max": 40,
+        "step": 1,
+        "description": "Maximum image width in terminal cells."
+      },
+      "imageMaxHeight": {
+        "type": "number",
+        "default": 14,
+        "min": 6,
+        "max": 30,
+        "step": 1,
+        "description": "Maximum image height in terminal cells."
+      },
+      "bubbleMaxWidth": {
+        "type": "number",
+        "min": 20,
+        "max": 120,
+        "step": 1,
+        "description": "Maximum speech-bubble width in visible columns."
+      },
+      "displayDurationSeconds": {
+        "type": "number",
+        "default": 30,
+        "min": 0,
+        "max": 3600,
+        "step": 1,
+        "description": "Seconds to show each Advisor note; 0 keeps it visible until the next update."
+      }
+    }
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "bun test",
+    "build": "bun build src/index.ts --outdir dist --target bun --external '@oh-my-pi/*'"
+  },
+  "dependencies": {
+    "@oh-my-pi/pi-coding-agent": "18.0.7",
+    "@oh-my-pi/pi-tui": "18.0.7"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.21",
+    "typescript": "^5.9.2",
+    "typescript-language-server": "^6.0.0"
+  }
+}
