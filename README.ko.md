@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>OMP를 위한 제한된 프로세스 내 Advisor companion 위젯</strong>
+  <strong>OMP용 크기 제한형 인프로세스 Advisor 컴패니언 위젯</strong>
 </p>
 
 <p align="center">
@@ -13,18 +13,18 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/can1357/oh-my-pi">Oh My Pi</a>의 기존 Advisor runtime을 위해 제작되었습니다.
+  <a href="https://github.com/can1357/oh-my-pi">Oh My Pi</a>의 기존 Advisor 런타임을 기반으로 제작되었습니다.
 </p>
 
 <p align="center">
   <a href="README.md">English</a> · 한국어
 </p>
 
-`omp-advisor-companion`은 정적 캐릭터 이미지와 최신 Advisor 노트를 편집기 위의 OMP 위젯에 표시합니다. 위젯은 Advisor 메시지가 도착했을 때만 나타납니다. 호스트 폭이 넓으면 이미지와 말풍선을 나란히 배치하고, 좁으면 이미지를 말풍선 위에 배치합니다. 위젯은 모달이 아니며 포커스를 가져가지 않습니다. OMP의 기본 Advisor 대화 기록 카드를 숨겨 각 노트가 한 번만 표시되도록 합니다.
+`omp-advisor-companion`은 정적 캐릭터 이미지와 최신 Advisor 노트를 편집기 위의 OMP 위젯에 표시합니다. 위젯은 Advisor 메시지가 도착할 때만 나타납니다. 호스트 폭이 넓으면 이미지와 말풍선을 나란히 배치하고, 좁으면 이미지를 말풍선 위에 배치합니다. 위젯은 모달이 아니며 포커스를 가져가지 않습니다. OMP의 기본 Advisor 기록 카드를 숨겨 각 노트가 한 번만 표시되도록 합니다.
 
-별도의 reviewer 모델은 실행하지 않습니다. OMP에 내장된 Advisor 메시지를 관찰하고, 안정적인 `omp-advisor-companion` 키 하나로 위젯을 갱신합니다.
+별도의 리뷰어 모델은 실행하지 않습니다. 대신 OMP에 내장된 Advisor 메시지를 관찰하고, 고정된 `omp-advisor-companion` 키 하나로 위젯을 갱신합니다.
 
-말풍선 헤더에는 `<concern>`처럼 severity 태그만 표시됩니다.
+말풍선 헤더에는 `<concern>`과 같은 심각도 태그만 표시됩니다.
 
 ## 요구 사항
 
@@ -32,7 +32,7 @@
 - [Bun](https://bun.sh) 1.3.14 이상
 - 설정된 OMP Advisor 모델
 
-Kitty 그래픽 지원은 선택 사항입니다. Kitty 그래픽을 사용할 수 없으면 OMP의 `Image` 컴포넌트가 이미지 대신 텍스트 대체 출력을 제공합니다.
+Kitty 그래픽 지원은 선택 사항입니다. Kitty 그래픽을 사용할 수 없으면 OMP의 `Image` 컴포넌트가 이미지 대신 대체 텍스트를 표시합니다.
 
 ## 설치
 
@@ -48,7 +48,7 @@ omp plugin install github:azyu/omp-advisor-companion
 omp plugin install https://github.com/azyu/omp-advisor-companion
 ```
 
-설치 후 OMP를 재시작하세요. OMP 18 이상에서는 `/reload-plugins`로 플러그인이 제공하는 skill, command, agent, MCP 상태를 갱신할 수 있지만, 실행 중인 프로세스에 extension factory를 다시 불러오지는 않습니다.
+설치 후 OMP를 재시작하세요. OMP 18 이상에서는 `/reload-plugins`로 플러그인이 제공하는 스킬, 명령, 에이전트, MCP 상태를 갱신할 수 있지만, 실행 중인 프로세스에서 확장 팩터리를 다시 불러오지는 않습니다.
 
 설치된 플러그인을 확인합니다.
 
@@ -58,7 +58,7 @@ omp plugin list
 
 ## Advisor 설정
 
-이 플러그인은 OMP Advisor를 그대로 사용하며 Advisor 모델 자체를 설정하지 않습니다. 최소 설정 예시는 다음과 같습니다.
+이 플러그인은 OMP Advisor를 그대로 사용하며 Advisor 모델 자체를 설정하지 않습니다. 최소 `~/.omp/agent/config.yml` 설정 예시는 다음과 같습니다.
 
 ```yaml
 modelRoles:
@@ -68,7 +68,7 @@ advisor:
   enabled: true
 ```
 
-OMP에 설치된 Advisor 지원 모델이라면 무엇이든 사용할 수 있습니다. 모델 역할, `WATCHDOG.md`, 다중 Advisor roster에 관한 내용은 OMP의 [Advisor 문서](https://github.com/can1357/oh-my-pi/blob/main/docs/advisor-watchdog.md)를 참고하세요.
+OMP에 설치된 Advisor 지원 모델이라면 무엇이든 사용할 수 있습니다. 모델 역할, `WATCHDOG.md`, 다중 Advisor 구성에 관한 내용은 OMP의 [Advisor 문서](https://github.com/can1357/oh-my-pi/blob/main/docs/advisor-watchdog.md)를 참고하세요.
 
 ## 사용법
 
@@ -82,22 +82,22 @@ OMP를 시작한 뒤 내장 명령을 사용합니다.
 
 동작 방식:
 
-- `/advisor on`은 미러링만 활성화하고 유효한 Advisor 메시지가 도착할 때까지 위젯을 숨깁니다. 여러 번 실행해도 상태가 중복 변경되지 않습니다.
+- `/advisor on`은 미러링만 활성화하고 유효한 Advisor 메시지가 도착할 때까지 위젯을 숨깁니다. 반복 실행해도 결과는 같습니다.
 - 위젯은 호스트 폭이 충분하면 이미지와 말풍선을 나란히 표시하고, 좁으면 이미지를 말풍선 위에 배치합니다.
-- Kitty 직접 출력을 사용할 때는 자체 완결형 이미지 블록을 말풍선 앞에 연속해서 배치하며, 정렬용 공백을 추가하지 않습니다. 이미지 블록은 바이트 단위로 동일하게 유지됩니다.
-- 말풍선 헤더에는 `Advisor`나 Advisor 이름 없이 `<concern>`처럼 severity 태그만 표시합니다.
-- 유효한 Advisor 메시지가 도착하면 마지막 유효 노트와 함께 이미지와 말풍선 그룹을 생성하거나 교체합니다. 단, 미러링을 명시적으로 끈 상태에서는 무시합니다.
-- 표시된 노트는 `displayDurationSeconds`초(기본값 `30`) 동안 유지됩니다. 말풍선 하단 테두리 오른쪽에는 `[ hides in Ns ]`가 표시되고 매초 갱신됩니다. 카운트다운이 `1s`에 도달하면 위젯을 숨깁니다. 새 노트가 표시되면 현재 위젯을 교체하고 숨김 타이머와 카운트다운을 모두 다시 시작합니다. `0`으로 설정하면 자동 숨김과 카운트다운을 비활성화합니다.
-- `/advisor off`는 위젯을 제거하고 현재 노트를 버리며, 다시 활성화할 때까지 이후 Advisor 메시지는 호스트가 처리하게 둡니다.
-- 세션 시작, 세션 전환, 세션 종료 시 위젯을 지우고 미러링 상태를 초기화합니다.
-- 인수가 없는 `/advisor` 명령은 확장이 현재 상태를 알고 있을 때만 토글합니다. 상태를 알 수 없으면 실제 Advisor 노트가 도착할 때까지 숨김 상태를 유지합니다.
-- TUI가 아니거나 UI가 없는 OMP 모드에서는 조용히 아무 동작도 하지 않습니다.
+- Kitty 직접 출력을 사용할 때는 자체 완결형 이미지 블록을 말풍선 앞에 끊김 없이 배치하며 정렬용 공백을 추가하지 않습니다. 이미지 블록은 바이트 단위로 동일하게 유지됩니다.
+- 말풍선 헤더에는 `Advisor`나 Advisor 이름 없이 `<concern>`과 같은 심각도 태그만 표시합니다.
+- 유효한 Advisor 메시지가 도착하면 최신 유효 노트를 담은 이미지·말풍선 그룹을 생성하거나 기존 그룹을 교체합니다. 단, 미러링을 명시적으로 끈 상태에서는 무시합니다.
+- 표시된 노트는 `displayDurationSeconds`초(기본값 `30`) 동안 유지됩니다. 말풍선 하단 테두리 오른쪽에는 `[ hides in Ns ]`가 표시되며 매초 갱신됩니다. 카운트다운이 `1s`에 도달하면 위젯을 숨깁니다. 새 노트가 표시되면 현재 위젯을 교체하고 숨김 타이머와 카운트다운을 모두 다시 시작합니다. `0`으로 설정하면 자동 숨김과 카운트다운을 비활성화합니다.
+- `/advisor off`는 위젯을 제거하고 현재 노트를 버리며, 다시 활성화할 때까지 이후 Advisor 메시지를 호스트의 기본 처리에 맡깁니다.
+- 세션을 시작하거나 전환하거나 종료하면 위젯을 지우고 미러링 상태를 초기화합니다.
+- 인수 없이 `/advisor`를 실행하면 확장이 현재 상태를 파악한 뒤에만 상태를 전환합니다. 상태를 알 수 없으면 실제 Advisor 노트가 도착할 때까지 숨김 상태를 유지합니다.
+- TUI가 아니거나 UI가 없는 OMP 모드에서는 아무 동작도 하지 않습니다.
 
-이미지는 표시할 유효한 Advisor 메시지가 있을 때만 지연 로딩됩니다. 확인된 각 로컬 이미지 경로에는 재시도 가능한 Promise 캐시를 따로 사용합니다. 성공한 로드는 재사용하고, 실패한 로드는 캐시에서 제거해 파일을 수정한 뒤 다시 불러올 수 있게 합니다. 잘못된 이미지 override를 설정하면 해당 활성화에서 경고를 한 번 출력하고 번들 asset으로 대체합니다. 번들 asset도 불러오지 못하면 위젯을 표시하지 않습니다.
+이미지는 유효한 Advisor 메시지를 표시해야 할 때만 지연 로딩됩니다. 확정된 각 로컬 이미지 경로에는 재시도 가능한 Promise 캐시를 따로 사용합니다. 성공한 로드는 재사용하고 실패한 로드는 캐시에서 제거하므로, 파일을 수정한 뒤 다시 불러올 수 있습니다. 잘못된 이미지 재정의 경로를 설정하면 활성화할 때마다 경고를 한 번 출력하고 번들 에셋으로 대체합니다. 번들 에셋도 불러오지 못하면 위젯을 표시하지 않습니다.
 
 ## 리소스 설정
 
-기본 이미지는 중립적인 placeholder 캐릭터 이미지인 `assets/advisor.png`입니다. 전역 설정은 OMP 플러그인 설정 명령을 사용합니다.
+기본 에셋은 중립적인 플레이스홀더 캐릭터 이미지인 `assets/advisor.png`입니다. 전역 설정은 OMP 플러그인 설정 명령으로 관리합니다.
 
 ```sh
 omp plugin config set omp-advisor-companion imagePath /absolute/path.png
@@ -108,7 +108,7 @@ omp plugin config set omp-advisor-companion displayDurationSeconds 30
 omp plugin config list omp-advisor-companion
 ```
 
-`imagePath`에는 절대 로컬 PNG 경로나 활성 프로젝트의 OMP `context.cwd`를 기준으로 한 상대 경로를 지정할 수 있습니다. 경로 시작 부분의 `~/`는 사용자 홈 디렉터리로 확장합니다. URL, data URI, glob, OMP 내부 URI 스킴은 이미지 경로로 해석하지 않습니다.
+`imagePath`에는 절대 로컬 PNG 경로나 활성 프로젝트의 OMP `context.cwd`를 기준으로 한 상대 경로를 지정할 수 있습니다. 경로 앞의 `~/`는 사용자 홈 디렉터리로 확장됩니다. URL, 데이터 URI, 글로브 패턴, OMP 내부 URI 스킴은 이미지 경로로 해석하지 않습니다.
 
 프로젝트별 설정은 `.omp/plugin-overrides.json`에 작성하며, 대응하는 전역 설정을 덮어씁니다.
 
@@ -130,22 +130,22 @@ omp plugin config list omp-advisor-companion
 
 1. 병합된 OMP 플러그인 설정에서 비어 있지 않은 프로젝트 또는 전역 `imagePath` 값
 2. `imagePath`가 비어 있을 때 `OMP_ADVISOR_COMPANION_IMAGE`
-3. 번들 placeholder `assets/advisor.png`
+3. 번들 플레이스홀더 `assets/advisor.png`
 
-숫자 설정은 유한한 정수로 변환한 뒤 manifest에 정의된 범위로 제한합니다. 이미지 너비는 `8`–`40` 셀(기본값 `20`), 이미지 높이는 `6`–`30` 셀(기본값 `14`), 말풍선 너비는 설정한 경우에만 보이는 열 기준 `20`–`120`열로 제한하고, 생략하면 사용 가능한 렌더링 폭을 사용합니다. 표시 시간은 `0`–`3600`초(기본값 `30`)입니다. 표시 시간을 `0`으로 설정하면 자동 숨김과 위젯 카운트다운을 비활성화합니다. 위젯이 숨겨지거나 `/advisor off`를 실행하거나 세션을 정리하면 카운트다운도 사라집니다. 변경 사항은 `/advisor off` 후 `/advisor on`을 실행하면 적용되며, OMP를 재시작해도 적용됩니다.
+숫자 설정은 유한한 정수로 변환한 뒤 매니페스트에 정의된 범위로 제한합니다. 이미지 너비는 `8`–`40`셀(기본값 `20`), 이미지 높이는 `6`–`30`셀(기본값 `14`), 말풍선 너비는 설정한 경우에만 표시 열 수를 기준으로 `20`–`120`열로 제한합니다. 말풍선 너비를 생략하면 사용 가능한 렌더링 폭을 사용합니다. 표시 시간은 `0`–`3600`초(기본값 `30`)입니다. 표시 시간을 `0`으로 설정하면 자동 숨김과 위젯 카운트다운을 비활성화합니다. 위젯이 숨겨지거나 `/advisor off`를 실행하거나 세션을 정리하면 카운트다운도 사라집니다. 변경 사항은 `/advisor off` 후 `/advisor on`을 실행하면 적용되며, OMP를 재시작해도 적용됩니다.
 
 ## 위젯 경계와 이미지 비율
 
-위젯은 `ctx.ui.setWidget("omp-advisor-companion", factory, { placement: "aboveEditor" })`와 OMP의 `@oh-my-pi/pi-tui` `Image` 컴포넌트를 사용합니다. OMP 18 이상에서 `WidgetPlacement`는 `aboveEditor`와 `belowEditor`만 제공하므로, 이 위젯은 편집기 위에 표시되며 진정한 오른쪽 도크가 아닙니다. 또한 편집기 폭을 예약하지 않습니다. 위젯은 비모달이고 포커스를 가져가지 않아야 하므로 custom overlay를 사용하지 않습니다.
+위젯은 `ctx.ui.setWidget("omp-advisor-companion", factory, { placement: "aboveEditor" })`와 OMP의 `@oh-my-pi/pi-tui` `Image` 컴포넌트를 사용합니다. OMP 18 이상에서 `WidgetPlacement`는 `aboveEditor`와 `belowEditor`만 제공하므로, 이 위젯은 편집기 위에 표시될 뿐 진정한 오른쪽 도크가 아니며 편집기 폭도 예약하지 않습니다. 위젯은 모달이 아니고 포커스를 가져가지 않아야 하므로 `custom` 오버레이를 사용하지 않습니다.
 
-- 유효한 노트가 없으면 위젯과 이미지·텍스트를 렌더링하지 않습니다.
+- 유효한 노트가 없으면 위젯이나 이미지, 텍스트를 렌더링하지 않습니다.
 - 호스트 폭이 충분하면 이미지와 말풍선을 나란히 표시하고, 좁으면 이미지를 말풍선 위에 배치합니다.
-- Kitty 직접 출력을 사용할 때는 자체 완결형 이미지 블록을 말풍선 앞에 연속해서 배치하며, 정렬용 공백을 추가하지 않습니다. 이미지 블록은 바이트 단위로 동일하게 유지됩니다.
-- 이미지는 설정한 셀 상한과 호스트 폭 안에 맞춥니다.
-- 말풍선은 설정했을 때만 지정한 표시 열 상한 안에 맞추며, 설정을 생략하면 사용 가능한 렌더링 폭을 사용합니다. 사용 가능한 폭이 더 좁으면 그 폭을 따릅니다.
+- Kitty 직접 출력을 사용할 때는 자체 완결형 이미지 블록을 말풍선 앞에 끊김 없이 배치하며 정렬용 공백을 추가하지 않습니다. 이미지 블록은 바이트 단위로 동일하게 유지됩니다.
+- 이미지는 설정한 셀 상한과 호스트 폭에 맞게 표시됩니다.
+- 말풍선 너비를 설정하면 지정한 표시 열 수를 넘지 않습니다. 설정하지 않으면 사용 가능한 렌더링 폭을 사용하며, 실제 가용 폭이 더 좁으면 그 폭에 맞춥니다.
 - OMP `Image`는 원본 픽셀 종횡비를 유지하면서 설정한 셀 경계 안에 맞춥니다. 1:1, 2:3, 3:4, 가로형 등 PNG 비율별 특수 처리는 필요하지 않습니다.
-- `imageMaxWidth`와 `imageMaxHeight`는 강제 출력 크기가 아니라 상한입니다. 설정 스키마의 `min` 값은 설정을 검증할 뿐 최소 렌더 크기를 강제하지 않습니다.
-- 설정을 생략하면 기본값인 `20×14` 셀을 적용합니다. 원본 종횡비나 호스트 폭에 따라 OMP가 더 적은 셀을 사용할 수 있습니다. 예를 들어 1:1 PNG는 일반적으로 2:3 PNG보다 적은 행을 사용합니다.
+- `imageMaxWidth`와 `imageMaxHeight`는 강제 출력 크기가 아니라 상한입니다. 설정 스키마의 `min` 값은 설정을 검증할 뿐 최소 렌더링 크기를 강제하지 않습니다.
+- 설정을 생략하면 기본값인 `20×14`셀을 적용합니다. 원본 종횡비나 호스트 폭에 따라 OMP가 더 적은 셀을 사용할 수 있습니다. 예를 들어 1:1 PNG는 일반적으로 2:3 PNG보다 더 적은 행을 사용합니다.
 - 두 상한을 모두 제거하면 OMP가 가용 폭에 맞춰 이미지를 표시할 수 있지만, 위젯 렌더러에는 신뢰할 수 있는 터미널 높이 제한 정보가 주어지지 않습니다. 따라서 이 플러그인은 이미지가 세로 공간을 과도하게 차지하지 않도록 명시적인 상한을 유지합니다.
 - 투명 캔버스 여백도 원본 종횡비에 포함됩니다. 보이는 캐릭터가 설정 경계를 더 채우게 하려면 투명 여백을 잘라내세요.
 
@@ -165,7 +165,7 @@ assets/advisor.png
 - 이미지 안에 텍스트나 말풍선 없음
 - 2 MiB 이하 권장
 
-배포 권한이 있는 이미지만 사용해 파일을 교체하세요. 이 확장은 OMP의 이미지 컴포넌트용으로 인코딩하기 전에 PNG 시그니처를 검증합니다.
+배포 권한이 있는 이미지만 사용해 파일을 교체하세요. 이 확장은 OMP의 이미지 컴포넌트에 맞게 인코딩하기 전에 PNG 시그니처를 검증합니다.
 
 ## 개발
 
@@ -185,9 +185,9 @@ bun install
 omp plugin link .
 ```
 
-`omp plugin link .`는 사용자 전역 개발 심볼릭 링크를 생성합니다. 소스 변경 후에는 OMP를 재시작해야 합니다.
+`omp plugin link .`는 사용자 전역 개발 심볼릭 링크를 생성합니다. 소스를 변경한 뒤에는 OMP를 재시작해야 합니다.
 
-특정 프로젝트에서만 개발하려면 전역으로 링크하는 대신 사용할 프로젝트의 `.omp/settings.json`에 체크아웃 경로를 추가합니다.
+특정 프로젝트에서만 개발하려면 전역으로 링크하는 대신 해당 프로젝트의 `.omp/settings.json`에 체크아웃 경로를 추가합니다.
 
 ```json
 {
@@ -197,22 +197,22 @@ omp plugin link .
 }
 ```
 
-기존 설정 파일을 통째로 덮어쓰지 말고 위 항목을 병합하세요.
+기존 설정을 유지한 채 위 항목을 병합하세요.
 
-집중 테스트가 확인하는 항목:
+핵심 테스트의 검증 대상:
 
 - 정확한 Advisor 명령 파싱
-- 정상 및 비정상 Advisor custom-message 추출
-- controller 활성화, 교체, 제거, 오래된 이미지 표시 억제, non-TUI 동작
-- 말풍선 정제, 줄바꿈, severity label, 설정 가능한 상한, 너비 제한
+- 정상 및 비정상 Advisor 커스텀 메시지 추출
+- 컨트롤러 활성화, 교체, 제거, 오래된 이미지 표시 억제, 비 TUI 동작
+- 말풍선 정제와 줄바꿈, 심각도 레이블, 설정 가능한 상한, 너비 제한
 
 프로젝트 구조:
 
 ```text
 src/
-├── index.ts           # OMP extension, 설정, 상태, widget lifecycle
-├── advisor-events.ts  # Advisor command, note type, message parsing
-└── panel-view.ts      # 제한된 image 및 speech-bubble component
+├── index.ts           # OMP 확장, 설정, 상태, 위젯 생명 주기
+├── advisor-events.ts  # Advisor 명령, 노트 타입, 메시지 파싱
+└── panel-view.ts      # 크기 제한형 이미지 및 말풍선 컴포넌트
 ```
 
 ## 업데이트
@@ -229,6 +229,6 @@ omp plugin upgrade omp-advisor-companion
 omp plugin uninstall omp-advisor-companion
 ```
 
-## 감사
+## 감사의 말
 
-- [Oh My Pi](https://github.com/can1357/oh-my-pi)는 extension API, Advisor runtime, 터미널 이미지 renderer를 제공합니다.
+- [Oh My Pi](https://github.com/can1357/oh-my-pi)는 확장 API, Advisor 런타임, 터미널 이미지 렌더러를 제공합니다.

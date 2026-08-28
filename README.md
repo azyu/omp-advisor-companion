@@ -232,6 +232,10 @@ Restart OMP after upgrading.
 omp plugin uninstall omp-advisor-companion
 ```
 
+## Disclaimer
+
+- The bundled placeholder image (`assets/advisor.png`) was generated with AI.
+
 ## Acknowledgements
 
 - [Oh My Pi](https://github.com/can1357/oh-my-pi) provides the extension API, the Advisor runtime, and the terminal image renderer.
