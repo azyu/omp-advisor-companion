@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/can1357/oh-my-pi"><img src="https://img.shields.io/badge/OMP-18%2B-7AA2F7?style=flat&colorA=222222" alt="OMP 18+"></a>
-  <a href="https://bun.sh"><img src="https://img.shields.io/badge/runtime-Bun%201.3.14%2B-f472b6?style=flat&colorA=222222" alt="Bun 1.3.14+"></a>
+  <a href="https://bun.sh"><img src="https://img.shields.io/badge/plugin%20install-Bun%201.3.14%2B-f472b6?style=flat&colorA=222222" alt="Bun 1.3.14+ for plugin installation"></a>
   <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat&colorA=222222&logo=typescript&logoColor=white" alt="TypeScript"></a>
 </p>
 
@@ -35,8 +35,10 @@ The bubble header contains only the severity tag, such as `<concern>`.
 ## Requirements
 
 - [OMP](https://github.com/can1357/oh-my-pi) 18 or newer
-- [Bun](https://bun.sh) 1.3.14 or newer
 - A configured OMP Advisor model
+- [Bun](https://bun.sh) 1.3.14 or newer on `PATH` for OMP plugin package management
+
+The plugin itself runs inside the host OMP process and does not require a separate Bun runtime after installation. However, OMP 18.0.7's plugin manager launches the external `bun` executable for Git/npm plugin installation, reinstallation, and uninstallation. Users who installed OMP with Bun already satisfy this requirement; users of a prebuilt OMP binary, Homebrew, or Nix must install Bun separately before running the plugin-management commands in this README.
 
 Kitty graphics support is optional. Without it, OMP's `Image` component provides a text fallback instead of rendering the image.
 

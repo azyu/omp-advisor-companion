@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/can1357/oh-my-pi"><img src="https://img.shields.io/badge/OMP-18%2B-7AA2F7?style=flat&colorA=222222" alt="OMP 18+"></a>
-  <a href="https://bun.sh"><img src="https://img.shields.io/badge/runtime-Bun%201.3.14%2B-f472b6?style=flat&colorA=222222" alt="Bun 1.3.14+"></a>
+  <a href="https://bun.sh"><img src="https://img.shields.io/badge/plugin%20install-Bun%201.3.14%2B-f472b6?style=flat&colorA=222222" alt="플러그인 설치용 Bun 1.3.14+"></a>
   <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat&colorA=222222&logo=typescript&logoColor=white" alt="TypeScript"></a>
 </p>
 
@@ -29,8 +29,10 @@
 ## 요구 사항
 
 - [OMP](https://github.com/can1357/oh-my-pi) 18 이상
-- [Bun](https://bun.sh) 1.3.14 이상
 - 설정된 OMP Advisor 모델
+- OMP 플러그인 패키지 관리를 위해 `PATH`에서 실행할 수 있는 [Bun](https://bun.sh) 1.3.14 이상
+
+플러그인 자체는 호스트 OMP 프로세스 안에서 실행되므로 설치 후 별도의 Bun 런타임이 필요하지 않습니다. 다만 OMP 18.0.7의 플러그인 관리자는 Git/npm 플러그인을 설치하거나 재설치하거나 제거할 때 외부 `bun` 실행 파일을 호출합니다. Bun으로 OMP를 설치한 사용자는 이미 이 요구 사항을 충족합니다. 사전 빌드된 OMP 바이너리나 Homebrew 또는 Nix로 OMP를 설치한 사용자는 이 README의 플러그인 관리 명령을 실행하기 전에 Bun을 별도로 설치해야 합니다.
 
 Kitty 그래픽 지원은 선택 사항입니다. Kitty 그래픽을 사용할 수 없으면 OMP의 `Image` 컴포넌트가 이미지 대신 대체 텍스트를 표시합니다.
 
