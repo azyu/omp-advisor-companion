@@ -101,6 +101,21 @@ Behavior:
 
 The image is loaded lazily when a valid Advisor message needs to be displayed. Each resolved local image path has its own retryable Promise cache: successful loads are reused, while failed loads are removed so a corrected file can be loaded later. An invalid configured override produces one warning for that activation and falls back to the bundled asset; if the bundled asset also fails, the widget remains hidden.
 
+## FAQ
+
+### Why is the image missing when OMP runs in Herdr inside Ghostty?
+
+Terminal capability detection may not identify the outer Ghostty session through Herdr. Force Kitty graphics and Kitty Unicode placeholders only in Herdr-managed shells by adding the following to `~/.zshrc`:
+
+```sh
+if [[ "${HERDR_ENV:-}" == "1" ]]; then
+  export PI_FORCE_IMAGE_PROTOCOL=kitty
+  export PI_KITTY_PLACEHOLDERS=1
+fi
+```
+
+`PI_FORCE_IMAGE_PROTOCOL=kitty` selects the Kitty image protocol. `PI_KITTY_PLACEHOLDERS=1` explicitly enables the Unicode placeholders needed to position images through the multiplexer. Open a new Herdr pane, or reload the shell configuration, and then restart OMP so it inherits both variables. Do not set these variables globally unless every terminal in which OMP runs supports Kitty graphics.
+
 ## Resource settings
 
 The bundled default is `assets/advisor.png`, a neutral placeholder character image. Global settings use OMP's plugin configuration commands:
