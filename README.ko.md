@@ -26,6 +26,10 @@
 
 말풍선 헤더에는 `<concern>`과 같은 심각도 태그만 표시됩니다.
 
+<p align="center">
+  <img src="assets/screen-shot.png" width="100%" alt="OMP Advisor Companion 스크린샷">
+</p>
+
 ## 요구 사항
 
 - [OMP](https://github.com/can1357/oh-my-pi) 18 이상
