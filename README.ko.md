@@ -250,6 +250,10 @@ omp plugin upgrade omp-advisor-companion
 omp plugin uninstall omp-advisor-companion
 ```
 
+## 면책 사항
+
+- 번들 플레이스홀더 이미지 (`assets/advisor.png`)는 AI로 생성되었습니다.
+
 ## 감사의 말
 
 - [Oh My Pi](https://github.com/can1357/oh-my-pi)는 확장 API, Advisor 런타임, 터미널 이미지 렌더러를 제공합니다.
