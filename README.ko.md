@@ -238,11 +238,15 @@ src/
 
 ## 업데이트
 
+이미 설치된 GitHub 플러그인을 업데이트하려면 저장소 설치 명령을 실행하세요.
+
 ```sh
-omp plugin upgrade omp-advisor-companion
+omp plugin install github:azyu/omp-advisor-companion
 ```
 
-업데이트 후 OMP를 재시작하세요.
+OMP 18.1.4에서 이 명령은 `✔ Installed omp-advisor-companion@0.1.0`을 출력하며 성공했고, `imagePath`를 포함한 기존 플러그인 설정을 보존했습니다. 이 설치 환경에서는 `omp plugin upgrade omp-advisor-companion`이 정상적으로 동작하는 업데이트 경로가 아닙니다.
+
+업데이트 후 OMP를 재시작하세요. `/reload-plugins`는 실행 중인 프로세스에서 확장 팩터리를 다시 불러오지 않습니다.
 
 ## 제거
 

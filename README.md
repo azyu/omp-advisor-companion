@@ -237,11 +237,15 @@ src/
 
 ## Upgrade
 
+To update an existing GitHub installation, run the repository install command:
+
 ```sh
-omp plugin upgrade omp-advisor-companion
+omp plugin install github:azyu/omp-advisor-companion
 ```
 
-Restart OMP after upgrading.
+On OMP 18.1.4 this completed successfully with `✔ Installed omp-advisor-companion@0.1.0` and preserved the existing plugin settings, including `imagePath`. The `omp plugin upgrade omp-advisor-companion` command is not the working upgrade path for this installation.
+
+Restart OMP after updating. `/reload-plugins` does not re-import extension factories in the running process.
 
 ## Uninstall
 
