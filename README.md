@@ -34,11 +34,11 @@ The bubble header contains only the severity tag, such as `<concern>`.
 
 ## Requirements
 
-- [OMP](https://github.com/can1357/oh-my-pi) 18 or newer
+- [OMP](https://github.com/can1357/oh-my-pi) 18.1.0 or newer
 - A configured OMP Advisor model
 - [Bun](https://bun.sh) 1.3.14 or newer on `PATH` for OMP plugin package management
 
-The plugin itself runs inside the host OMP process and does not require a separate Bun runtime after installation. However, OMP 18.0.7's plugin manager launches the external `bun` executable for Git/npm plugin installation, reinstallation, and uninstallation. Users who installed OMP with Bun already satisfy this requirement; users of a prebuilt OMP binary, Homebrew, or Nix must install Bun separately before running the plugin-management commands in this README.
+The plugin itself runs inside the host OMP process and does not require a separate Bun runtime after installation. However, OMP's plugin manager launches the external `bun` executable for Git/npm plugin installation, reinstallation, and uninstallation. Users who installed OMP with Bun already satisfy this requirement; users of a prebuilt OMP binary, Homebrew, or Nix must install Bun separately before running the plugin-management commands in this README.
 
 Kitty graphics support is optional. Without it, OMP's `Image` component provides a text fallback instead of rendering the image.
 
@@ -106,7 +106,17 @@ The image is loaded lazily when the widget first needs to appear: on a valid Adv
 
 ### Why is the image missing when OMP runs in Herdr inside Ghostty?
 
-Terminal capability detection may not identify the outer Ghostty session through Herdr. Force Kitty graphics and Kitty Unicode placeholders only in Herdr-managed shells by adding the following to `~/.zshrc`:
+Raw `􎻮` glyphs mean OMP loaded the image and emitted Kitty Unicode placeholders, but Herdr did not render them. This is a terminal-capability issue, not an `imagePath` issue. OMP 18.1.0 and newer conservatively use the text fallback inside Herdr unless Kitty graphics are explicitly enabled.
+
+To render the actual image, first enable Herdr's opt-in renderer:
+
+```toml
+# ~/.config/herdr/config.toml
+[experimental]
+kitty_graphics = true
+```
+
+Then force Kitty graphics only in Herdr-managed shells:
 
 ```sh
 if [[ "${HERDR_ENV:-}" == "1" ]]; then
@@ -115,7 +125,7 @@ if [[ "${HERDR_ENV:-}" == "1" ]]; then
 fi
 ```
 
-`PI_FORCE_IMAGE_PROTOCOL=kitty` selects the Kitty image protocol. `PI_KITTY_PLACEHOLDERS=1` explicitly enables the Unicode placeholders needed to position images through the multiplexer. Open a new Herdr pane, or reload the shell configuration, and then restart OMP so it inherits both variables. Do not set these variables globally unless every terminal in which OMP runs supports Kitty graphics.
+Restart or reattach Herdr, open a new pane, and restart OMP so the image data is transmitted again. If Herdr's Kitty renderer remains disabled, remove both `PI_` overrides and restart OMP; the safe result is OMP's visible text fallback rather than raw placeholders.
 
 ## Resource settings
 

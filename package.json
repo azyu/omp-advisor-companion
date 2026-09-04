@@ -56,8 +56,8 @@
     "build": "bun build src/index.ts --outdir dist --target bun --external '@oh-my-pi/*'"
   },
   "dependencies": {
-    "@oh-my-pi/pi-coding-agent": "18.0.7",
-    "@oh-my-pi/pi-tui": "18.0.7"
+    "@oh-my-pi/pi-coding-agent": "18.1.8",
+    "@oh-my-pi/pi-tui": "18.1.8"
   },
   "devDependencies": {
     "@types/bun": "^1.2.21",
