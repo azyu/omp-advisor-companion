@@ -22,7 +22,7 @@
 
 <a id="english"></a>
 
-`omp-advisor-companion` displays a static character image and the latest Advisor note in an OMP widget above the editor. The widget appears only when an Advisor message arrives. On wider hosts, the image sits beside the bubble; on narrower hosts, it stacks above the bubble. The widget is non-modal, never takes focus, and hides OMP's built-in Advisor transcript card so each note appears only once.
+`omp-advisor-companion` displays a static character image and the latest Advisor note in an OMP widget above the editor. By default, the widget appears only when an Advisor message arrives; `alwaysVisible` can keep an idle image and empty bubble on screen before the first note. On wider hosts, the image sits beside the bubble; on narrower hosts, it stacks above the bubble. The widget is non-modal, never takes focus, and hides OMP's built-in Advisor transcript card so each note appears only once.
 
 It does not run a separate reviewer model. Instead, it observes OMP's built-in Advisor messages and updates a single widget under the stable `omp-advisor-companion` key.
 
@@ -90,16 +90,17 @@ Start OMP, then use the built-in commands:
 
 Behavior:
 
-- `/advisor on` enables mirroring but keeps the widget hidden until a valid Advisor message arrives. Repeated activation is idempotent.
+- `/advisor on` enables mirroring but, by default, keeps the widget hidden until a valid Advisor message arrives. Repeated activation is idempotent.
 - When Kitty output is used, the self-contained image block remains contiguous and byte-for-byte unchanged before the bubble; no alignment spaces are added.
 - A valid Advisor message creates or replaces the image-and-bubble group with the latest valid note unless mirroring was explicitly turned off.
-- Each successfully displayed note stays visible for `displayDurationSeconds` seconds (default `30`). The bubble's bottom border shows `[ hides in Ns ]` aligned toward its lower-right edge and updates once per second. When the countdown reaches `1s`, the widget hides. A newer note replaces the current widget and resets both the hide timer and countdown. A value of `0` disables automatic hiding and removes the countdown.
+- With `alwaysVisible: true`, session start and `/advisor on` immediately show the image with an empty idle bubble. Advisor notes then remain visible without a countdown until replaced, `/advisor off` runs, or the session ends.
+- When `alwaysVisible` is `false`, each successfully displayed note stays visible for `displayDurationSeconds` seconds (default `30`). The bubble's bottom border shows `[ hides in Ns ]` aligned toward its lower-right edge and updates once per second. When the countdown reaches `1s`, the widget hides. A newer note replaces the current widget and resets both the hide timer and countdown. A value of `0` disables automatic hiding and removes the countdown.
 - `/advisor off` removes the widget, discards the current note, and leaves later Advisor messages to the host until mirroring is enabled again.
-- Session start, session switching, and session shutdown clear the widget and reset the mirrored state.
-- The bare `/advisor` command toggles only after the extension knows the state. An unknown state remains hidden until a real Advisor note arrives.
+- Session switching and shutdown clear the widget and reset the mirrored state. Session start does the same, then recreates the idle widget when `alwaysVisible` is enabled.
+- The bare `/advisor` command toggles only after the extension knows the state. With the default settings, an unknown state remains hidden until a real Advisor note arrives.
 - Non-TUI and no-UI OMP modes are silent no-ops.
 
-The image is loaded lazily when a valid Advisor message needs to be displayed. Each resolved local image path has its own retryable Promise cache: successful loads are reused, while failed loads are removed so a corrected file can be loaded later. An invalid configured override produces one warning for that activation and falls back to the bundled asset; if the bundled asset also fails, the widget remains hidden.
+The image is loaded lazily when the widget first needs to appear: on a valid Advisor message by default, or at session start when `alwaysVisible` is enabled. Each resolved local image path has its own retryable Promise cache: successful loads are reused, while failed loads are removed so a corrected file can be loaded later. An invalid configured override produces one warning for that activation and falls back to the bundled asset; if the bundled asset also fails, the widget remains hidden.
 
 ## FAQ
 
@@ -125,6 +126,7 @@ omp plugin config set omp-advisor-companion imagePath /absolute/path.png
 omp plugin config set omp-advisor-companion imageMaxWidth 20
 omp plugin config set omp-advisor-companion imageMaxHeight 14
 omp plugin config set omp-advisor-companion bubbleMaxWidth 60
+omp plugin config set omp-advisor-companion alwaysVisible true
 omp plugin config set omp-advisor-companion displayDurationSeconds 30
 omp plugin config list omp-advisor-companion
 ```
@@ -141,6 +143,7 @@ Project-specific settings go in `.omp/plugin-overrides.json` and override the co
       "imageMaxWidth": 24,
       "imageMaxHeight": 18,
       "bubbleMaxWidth": 72,
+      "alwaysVisible": true,
       "displayDurationSeconds": 15
     }
   }
@@ -153,13 +156,13 @@ The effective settings precedence is:
 2. `OMP_ADVISOR_COMPANION_IMAGE` when `imagePath` is empty;
 3. The bundled `assets/advisor.png` placeholder.
 
-Numeric settings are normalized to finite integers and clamped to their manifest ranges: image width `8`–`40` cells (default `20`), image height `6`–`30` cells (default `14`), bubble width `20`–`120` visible columns when configured, and display duration `0`–`3600` seconds (default `30`). When `bubbleMaxWidth` is omitted, the bubble uses the available render width. A display duration of `0` disables automatic hiding and the widget countdown. The countdown disappears when the widget hides, `/advisor off` runs, or the session is cleaned up. Changes apply after `/advisor off` followed by `/advisor on`; restarting OMP also applies them.
+`alwaysVisible` defaults to `false`. When enabled, it overrides `displayDurationSeconds`: the idle group appears immediately and notes never auto-hide. Numeric settings are normalized to finite integers and clamped to their manifest ranges: image width `8`–`40` cells (default `20`), image height `6`–`30` cells (default `14`), bubble width `20`–`120` visible columns when configured, and display duration `0`–`3600` seconds (default `30`). When `bubbleMaxWidth` is omitted, the bubble uses the available render width. With `alwaysVisible` disabled, a display duration of `0` keeps the first displayed note visible without a countdown but does not show an idle widget before that note. The countdown disappears when the widget hides, `/advisor off` runs, or the session is cleaned up. Changes apply after `/advisor off` followed by `/advisor on`; restarting OMP also applies them.
 
 ## Widget bounds and image ratios
 
 The widget uses `ctx.ui.setWidget("omp-advisor-companion", factory, { placement: "aboveEditor" })` and OMP's `@oh-my-pi/pi-tui` `Image` component. In OMP 18 or newer, `WidgetPlacement` provides only `aboveEditor` and `belowEditor`: this is an above-editor widget, not a true right-hand dock, and it does not reserve editor width. The extension does not use a custom overlay because the widget must remain non-modal and never take focus.
 
-- The widget is absent until a valid Advisor note is available.
+- By default, the widget is absent until a valid Advisor note is available. With `alwaysVisible` enabled, it renders the image and an empty bubble while idle.
 - With enough host width, the image and bubble render side by side; narrower hosts stack the image above the bubble.
 - When Kitty output is used, the self-contained image block remains contiguous and byte-for-byte unchanged before the bubble; no alignment spaces are added.
 - Bubble: contained within the configured visible-column cap when set, or the available render width when omitted or narrower.

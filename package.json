@@ -35,6 +35,11 @@
         "step": 1,
         "description": "Maximum speech-bubble width in visible columns."
       },
+      "alwaysVisible": {
+        "type": "boolean",
+        "default": false,
+        "description": "Keep an idle image and speech bubble visible, and never auto-hide Advisor notes."
+      },
       "displayDurationSeconds": {
         "type": "number",
         "default": 30,

@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS: AdvisorResourceSettings = {
   imagePath: "",
   imageMaxWidth: 20,
   imageMaxHeight: 14,
+  alwaysVisible: false,
   displayDurationSeconds: 30,
 };
 const SETTING_BOUNDS = {
@@ -35,6 +36,7 @@ interface AdvisorResourceSettings {
   imageMaxWidth: number;
   imageMaxHeight: number;
   bubbleMaxWidth?: number;
+  alwaysVisible: boolean;
   displayDurationSeconds: number;
 }
 
@@ -96,6 +98,7 @@ function normalizeSettings(settings: Record<string, unknown>): AdvisorResourceSe
       SETTING_BOUNDS.bubbleMaxWidth.min,
       SETTING_BOUNDS.bubbleMaxWidth.max,
     ),
+    alwaysVisible: settings.alwaysVisible === true,
     displayDurationSeconds: normalizeInteger(
       settings.displayDurationSeconds,
       DEFAULT_SETTINGS.displayDurationSeconds,
@@ -199,6 +202,7 @@ export class AdvisorController {
     if (this.#mirrorState === true) return;
     this.#mirrorState = true;
     this.#warningIssued = false;
+    await this.#activateIfAlwaysVisible(context);
   }
 
   /**
@@ -226,6 +230,7 @@ export class AdvisorController {
     this.#note = undefined;
     this.#warningIssued = false;
     await this.#clearWidget(context);
+    await this.#activateIfAlwaysVisible(context);
   }
 
   async handleSessionEnd(context: ExtensionContext): Promise<void> {
@@ -283,6 +288,17 @@ export class AdvisorController {
     }
   }
 
+  async #activateIfAlwaysVisible(context: ExtensionContext): Promise<void> {
+    const version = this.#widgetVersion;
+    if (this.#settings === undefined && this.#settingsPromise === undefined) {
+      this.#settingsPromise = this.#readSettings(context.cwd);
+    }
+    const settings = this.#settings ?? (await (this.#settingsPromise ?? Promise.resolve({ ...DEFAULT_SETTINGS })));
+    if (version !== this.#widgetVersion || this.#mirrorState === false || !settings.alwaysVisible) return;
+    this.#settings = settings;
+    await this.#activate(context);
+  }
+
   async #activate(context: ExtensionContext): Promise<void> {
     const version = ++this.#widgetVersion;
     this.#mirrorState = true;
@@ -299,7 +315,7 @@ export class AdvisorController {
 
     const base64Png = await this.#loadConfiguredImage(settings, context, version);
     if (base64Png === undefined || version !== this.#widgetVersion || this.#mirrorState !== true) return;
-    const initialNote = this.#note;
+    const initialNote = this.#note ?? (settings.alwaysVisible ? { note: "" } : undefined);
     try {
       context.ui.setWidget(
         WIDGET_KEY,
@@ -314,13 +330,15 @@ export class AdvisorController {
             imageMaxHeight: settings.imageMaxHeight,
             bubbleMaxWidth: settings.bubbleMaxWidth,
             countdownText:
-              settings.displayDurationSeconds > 0 ? () => this.#countdownText(version) : undefined,
+              !settings.alwaysVisible && settings.displayDurationSeconds > 0
+                ? () => this.#countdownText(version)
+                : undefined,
             onError: error => this.#warnOnce(context, version, "render", error),
           });
         },
         { placement: "aboveEditor" },
       );
-      this.#scheduleHideTimer(context, version, settings.displayDurationSeconds);
+      this.#scheduleHideTimer(context, version, settings.alwaysVisible ? 0 : settings.displayDurationSeconds);
     } catch (error) {
       this.#warnOnce(context, version, "render", error);
     }

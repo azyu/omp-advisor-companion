@@ -112,7 +112,7 @@ describe("Advisor companion controller", () => {
     await controller.handleInput("/advisor on", context);
 
     expect(widgetFactories(calls)).toHaveLength(0);
-    expect(settingsCalls).toEqual([]);
+    expect(settingsCalls).toEqual([["omp-advisor-companion", "/project"]]);
     expect(imageReads).toBe(0);
 
     await controller.handleMessage(
@@ -152,8 +152,40 @@ describe("Advisor companion controller", () => {
     await controller.handleInput("/advisor on", context);
 
     expect(widgetFactories(calls)).toHaveLength(0);
-    expect(settingsReads).toBe(0);
+    expect(settingsReads).toBe(1);
     expect(imageReads).toBe(0);
+  });
+
+  it("shows an idle group from session start and keeps notes visible when configured", async () => {
+    const { context, calls } = testContext();
+    const timers = fakeTimers();
+    const controller = new AdvisorController({} as never, {
+      getPluginSettings: async () => ({ alwaysVisible: true, displayDurationSeconds: 1 }),
+      loadImage: async () => PNG,
+      env: {},
+      setTimeout: timers.setTimeout,
+      clearTimeout: timers.clearTimeout,
+    });
+
+    await controller.handleSessionStart(context);
+
+    const idleView = componentFrom(widgetFactories(calls).at(-1)!);
+    expect(idleView.note).toEqual({ note: "" });
+    expect(idleView.render(80).length).toBeGreaterThan(0);
+
+    await controller.handleMessage(
+      { role: "custom", customType: "advisor", details: { notes: [{ note: "always here" }] } },
+      context,
+    );
+
+    const noteView = componentFrom(widgetFactories(calls).at(-1)!);
+    expect(noteView.note).toEqual({ note: "always here" });
+    expect(noteView.render(80).join("\n")).not.toContain("[ hides in ");
+    expect(timers.timers).toHaveLength(0);
+
+    await controller.handleInput("/advisor off", context);
+    await controller.handleInput("/advisor on", context);
+    expect(componentFrom(widgetFactories(calls).at(-1)!).note).toEqual({ note: "" });
   });
 
   it("replaces the widget with the final note from a valid batched Advisor message", async () => {
