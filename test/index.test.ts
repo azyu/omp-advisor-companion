@@ -135,6 +135,36 @@ describe("Advisor companion controller", () => {
     expect(imageReads).toBe(1);
   });
 
+  it("uses a severity image when configured and the default image otherwise", async () => {
+    const { context, calls } = testContext();
+    const loadedPaths: string[] = [];
+    const controller = new AdvisorController({} as never, {
+      getPluginSettings: async () => ({
+        imagePath: String.raw`G:\default.png`,
+        concernImagePath: String.raw`G:\concern.png`,
+      }),
+      loadImage: async path => {
+        loadedPaths.push(path);
+        return PNG;
+      },
+      env: {},
+    });
+
+    for (const severity of ["nit", "concern", "blocker"] as const) {
+      await controller.handleMessage(
+        { role: "custom", customType: "advisor", details: { notes: [{ note: severity, severity }] } },
+        context,
+      );
+    }
+
+    expect(loadedPaths).toEqual([String.raw`G:\default.png`, String.raw`G:\concern.png`]);
+    expect(widgetFactories(calls).map(factory => componentFrom(factory).note?.severity)).toEqual([
+      "nit",
+      "concern",
+      "blocker",
+    ]);
+  });
+
   it("loads an absolute Windows drive path", async () => {
     const { context } = testContext();
     const loadedPaths: string[] = [];

@@ -12,6 +12,21 @@
         "env": "OMP_ADVISOR_COMPANION_IMAGE",
         "description": "Absolute or project-cwd-relative PNG or JPEG image path."
       },
+      "nitImagePath": {
+        "type": "string",
+        "default": "",
+        "description": "PNG or JPEG image path for nit notes; falls back to imagePath."
+      },
+      "concernImagePath": {
+        "type": "string",
+        "default": "",
+        "description": "PNG or JPEG image path for concern notes; falls back to imagePath."
+      },
+      "blockerImagePath": {
+        "type": "string",
+        "default": "",
+        "description": "PNG or JPEG image path for blocker notes; falls back to imagePath."
+      },
       "imageMaxWidth": {
         "type": "number",
         "default": 20,

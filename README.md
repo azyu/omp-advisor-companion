@@ -146,6 +146,7 @@ The bundled default is `assets/advisor.png`, a neutral placeholder character ima
 
 ```sh
 omp plugin config set omp-advisor-companion imagePath /absolute/path.png
+omp plugin config set omp-advisor-companion concernImagePath /absolute/concern.png
 omp plugin config set omp-advisor-companion imageMaxWidth 20
 omp plugin config set omp-advisor-companion imageMaxHeight 14
 omp plugin config set omp-advisor-companion bubbleMaxWidth 60
@@ -156,6 +157,8 @@ omp plugin config list omp-advisor-companion
 
 `imagePath` accepts an absolute local PNG or JPEG path or a path relative to the active project's OMP `context.cwd`. Windows drive paths are supported; in PowerShell, for example: `omp plugin config set omp-advisor-companion imagePath 'G:\Working\advisor.jpg'`. A leading `~/` is expanded to the user's home directory. URLs, data URIs, globs, and OMP internal URI schemes are not interpreted as image paths.
 
+`nitImagePath`, `concernImagePath`, and `blockerImagePath` accept the same path forms. A non-empty severity-specific path is used for that note type; an omitted or empty value falls back to `imagePath`. The idle image shown by `alwaysVisible` also uses `imagePath`.
+
 Project-specific settings go in `.omp/plugin-overrides.json` and override the corresponding global values:
 
 ```json
@@ -163,6 +166,7 @@ Project-specific settings go in `.omp/plugin-overrides.json` and override the co
   "settings": {
     "omp-advisor-companion": {
       "imagePath": "./assets/project-advisor.png",
+      "concernImagePath": "./assets/project-advisor-concern.png",
       "imageMaxWidth": 24,
       "imageMaxHeight": 18,
       "bubbleMaxWidth": 72,
@@ -175,9 +179,10 @@ Project-specific settings go in `.omp/plugin-overrides.json` and override the co
 
 The effective settings precedence is:
 
-1. A non-empty project or global `imagePath` value from the merged OMP plugin settings;
-2. `OMP_ADVISOR_COMPANION_IMAGE` when `imagePath` is empty;
-3. The bundled `assets/advisor.png` placeholder.
+1. The matching non-empty `nitImagePath`, `concernImagePath`, or `blockerImagePath` for a typed note;
+2. A non-empty project or global `imagePath` value from the merged OMP plugin settings;
+3. `OMP_ADVISOR_COMPANION_IMAGE` when `imagePath` is empty;
+4. The bundled `assets/advisor.png` placeholder.
 
 `alwaysVisible` defaults to `false`. When enabled, it overrides `displayDurationSeconds`: the idle group appears immediately and notes never auto-hide. Numeric settings are normalized to finite integers and clamped to their manifest ranges: image width `8`–`40` cells (default `20`), image height `6`–`30` cells (default `14`), bubble width `20`–`120` visible columns when configured, and display duration `0`–`3600` seconds (default `30`). When `bubbleMaxWidth` is omitted, the bubble uses the available render width. With `alwaysVisible` disabled, a display duration of `0` keeps the first displayed note visible without a countdown but does not show an idle widget before that note. The countdown disappears when the widget hides, `/advisor off` runs, or the session is cleaned up. Changes apply after `/advisor off` followed by `/advisor on`; restarting OMP also applies them.
 

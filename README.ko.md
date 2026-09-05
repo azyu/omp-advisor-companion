@@ -146,6 +146,7 @@ if ($env:HERDR_ENV -eq "1") {
 
 ```sh
 omp plugin config set omp-advisor-companion imagePath /absolute/path.png
+omp plugin config set omp-advisor-companion concernImagePath /absolute/concern.png
 omp plugin config set omp-advisor-companion imageMaxWidth 20
 omp plugin config set omp-advisor-companion imageMaxHeight 14
 omp plugin config set omp-advisor-companion bubbleMaxWidth 60
@@ -156,6 +157,8 @@ omp plugin config list omp-advisor-companion
 
 `imagePath`에는 절대 로컬 PNG/JPEG 경로나 활성 프로젝트의 OMP `context.cwd`를 기준으로 한 상대 경로를 지정할 수 있습니다. Windows 드라이브 경로도 지원합니다. PowerShell 예시: `omp plugin config set omp-advisor-companion imagePath 'G:\Working\advisor.jpg'`. 경로 앞의 `~/`는 사용자 홈 디렉터리로 확장됩니다. URL, 데이터 URI, 글로브 패턴, OMP 내부 URI 스킴은 이미지 경로로 해석하지 않습니다.
 
+`nitImagePath`, `concernImagePath`, `blockerImagePath`에도 같은 형식의 경로를 지정할 수 있습니다. 메시지 타입에 해당하는 경로가 비어 있지 않으면 그 이미지를 사용하고, 생략하거나 비워 두면 `imagePath`로 폴백합니다. `alwaysVisible`의 대기 이미지도 `imagePath`를 사용합니다.
+
 프로젝트별 설정은 `.omp/plugin-overrides.json`에 작성하며, 대응하는 전역 설정을 덮어씁니다.
 
 ```json
@@ -163,6 +166,7 @@ omp plugin config list omp-advisor-companion
   "settings": {
     "omp-advisor-companion": {
       "imagePath": "./assets/project-advisor.png",
+      "concernImagePath": "./assets/project-advisor-concern.png",
       "imageMaxWidth": 24,
       "imageMaxHeight": 18,
       "bubbleMaxWidth": 72,
@@ -175,9 +179,10 @@ omp plugin config list omp-advisor-companion
 
 적용되는 설정의 우선순위는 다음과 같습니다.
 
-1. 병합된 OMP 플러그인 설정에서 비어 있지 않은 프로젝트 또는 전역 `imagePath` 값
-2. `imagePath`가 비어 있을 때 `OMP_ADVISOR_COMPANION_IMAGE`
-3. 번들 플레이스홀더 `assets/advisor.png`
+1. 타입이 있는 노트와 일치하는 비어 있지 않은 `nitImagePath`, `concernImagePath`, `blockerImagePath`
+2. 병합된 OMP 플러그인 설정에서 비어 있지 않은 프로젝트 또는 전역 `imagePath` 값
+3. `imagePath`가 비어 있을 때 `OMP_ADVISOR_COMPANION_IMAGE`
+4. 번들 플레이스홀더 `assets/advisor.png`
 
 `alwaysVisible`의 기본값은 `false`입니다. 활성화하면 `displayDurationSeconds`보다 우선하여 대기 그룹을 즉시 표시하고 노트를 자동으로 숨기지 않습니다. 숫자 설정은 유한한 정수로 변환한 뒤 매니페스트에 정의된 범위로 제한합니다. 이미지 너비는 `8`–`40`셀(기본값 `20`), 이미지 높이는 `6`–`30`셀(기본값 `14`), 말풍선 너비는 설정한 경우에만 표시 열 수를 기준으로 `20`–`120`열로 제한합니다. 말풍선 너비를 생략하면 사용 가능한 렌더링 폭을 사용합니다. 표시 시간은 `0`–`3600`초(기본값 `30`)입니다. `alwaysVisible`이 꺼진 상태에서 표시 시간을 `0`으로 설정하면 처음 표시된 노트를 카운트다운 없이 유지하지만 그 노트가 도착하기 전에는 대기 위젯을 표시하지 않습니다. 위젯이 숨겨지거나 `/advisor off`를 실행하거나 세션을 정리하면 카운트다운도 사라집니다. 변경 사항은 `/advisor off` 후 `/advisor on`을 실행하면 적용되며, OMP를 재시작해도 적용됩니다.
 

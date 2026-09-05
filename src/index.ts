@@ -15,6 +15,9 @@ const BUNDLED_IMAGE_PATH = fileURLToPath(new URL("../assets/advisor.png", import
 
 const DEFAULT_SETTINGS: AdvisorResourceSettings = {
   imagePath: "",
+  nitImagePath: "",
+  concernImagePath: "",
+  blockerImagePath: "",
   imageMaxWidth: 20,
   imageMaxHeight: 14,
   alwaysVisible: false,
@@ -40,6 +43,9 @@ export type AdvisorClearTimeout = (timer: AdvisorTimerHandle) => void;
 
 interface AdvisorResourceSettings {
   imagePath: string;
+  nitImagePath: string;
+  concernImagePath: string;
+  blockerImagePath: string;
   imageMaxWidth: number;
   imageMaxHeight: number;
   bubbleMaxWidth?: number;
@@ -86,8 +92,14 @@ function normalizeOptionalInteger(value: unknown, min: number, max: number): num
 
 function normalizeSettings(settings: Record<string, unknown>): AdvisorResourceSettings {
   const imagePath = typeof settings.imagePath === "string" ? settings.imagePath.trim() : "";
+  const nitImagePath = typeof settings.nitImagePath === "string" ? settings.nitImagePath.trim() : "";
+  const concernImagePath = typeof settings.concernImagePath === "string" ? settings.concernImagePath.trim() : "";
+  const blockerImagePath = typeof settings.blockerImagePath === "string" ? settings.blockerImagePath.trim() : "";
   return {
     imagePath,
+    nitImagePath,
+    concernImagePath,
+    blockerImagePath,
     imageMaxWidth: normalizeInteger(
       settings.imageMaxWidth,
       DEFAULT_SETTINGS.imageMaxWidth,
@@ -279,7 +291,15 @@ export class AdvisorController {
   }
 
   async #loadConfiguredImage(settings: AdvisorResourceSettings, context: ExtensionContext, version: number): Promise<AdvisorImage | undefined> {
-    const configuredPath = settings.imagePath || this.#env.OMP_ADVISOR_COMPANION_IMAGE?.trim() || "";
+    const severityPath =
+      this.#note?.severity === "nit"
+        ? settings.nitImagePath
+        : this.#note?.severity === "concern"
+          ? settings.concernImagePath
+          : this.#note?.severity === "blocker"
+            ? settings.blockerImagePath
+            : "";
+    const configuredPath = severityPath || settings.imagePath || this.#env.OMP_ADVISOR_COMPANION_IMAGE?.trim() || "";
     const resolvedPath = configuredPath.length > 0 ? configuredPath : BUNDLED_IMAGE_PATH;
     try {
       return await this.#cachedImage(resolveImagePath(resolvedPath, context.cwd));
