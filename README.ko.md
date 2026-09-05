@@ -141,7 +141,7 @@ omp plugin config set omp-advisor-companion displayDurationSeconds 30
 omp plugin config list omp-advisor-companion
 ```
 
-`imagePath`에는 절대 로컬 PNG 경로나 활성 프로젝트의 OMP `context.cwd`를 기준으로 한 상대 경로를 지정할 수 있습니다. 경로 앞의 `~/`는 사용자 홈 디렉터리로 확장됩니다. URL, 데이터 URI, 글로브 패턴, OMP 내부 URI 스킴은 이미지 경로로 해석하지 않습니다.
+`imagePath`에는 절대 로컬 PNG/JPEG 경로나 활성 프로젝트의 OMP `context.cwd`를 기준으로 한 상대 경로를 지정할 수 있습니다. Windows 드라이브 경로도 지원합니다. PowerShell 예시: `omp plugin config set omp-advisor-companion imagePath 'G:\Working\advisor.jpg'`. 경로 앞의 `~/`는 사용자 홈 디렉터리로 확장됩니다. URL, 데이터 URI, 글로브 패턴, OMP 내부 URI 스킴은 이미지 경로로 해석하지 않습니다.
 
 프로젝트별 설정은 `.omp/plugin-overrides.json`에 작성하며, 대응하는 전역 설정을 덮어씁니다.
 
@@ -199,7 +199,7 @@ assets/advisor.png
 - 이미지 안에 텍스트나 말풍선 없음
 - 2 MiB 이하 권장
 
-배포 권한이 있는 이미지만 사용해 파일을 교체하세요. 이 확장은 OMP의 이미지 컴포넌트에 맞게 인코딩하기 전에 PNG 시그니처를 검증합니다.
+배포 권한이 있는 이미지만 사용하세요. 이 확장은 OMP의 이미지 컴포넌트에 맞게 인코딩하기 전에 설정한 PNG/JPEG 파일의 시그니처를 검증합니다.
 
 ## 개발
 

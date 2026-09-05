@@ -163,6 +163,7 @@ export function renderBubble(note: AdvisorNote, width: number, maxWidth?: number
 
 export interface AdvisorPanelViewOptions {
   initialNote?: AdvisorNote;
+  imageMimeType?: "image/png" | "image/jpeg";
   imageBudget?: ImageBudget;
   imageMaxWidth?: number;
   imageMaxHeight?: number;
@@ -210,7 +211,8 @@ function fitLineToWidth(line: string, width: number): string {
 
 /** Render the Advisor image and latest note only while a note is available. */
 export class AdvisorPanelView implements Component {
-  readonly #base64Png: string;
+  readonly #base64Image: string;
+  readonly #imageMimeType: "image/png" | "image/jpeg";
   #note: AdvisorNote | undefined;
   #image: Image | undefined;
   #cachedLines: readonly string[] | undefined;
@@ -224,8 +226,9 @@ export class AdvisorPanelView implements Component {
   readonly #countdownText: (() => string | undefined) | undefined;
   readonly #onError: ((error: unknown) => void) | undefined;
 
-  constructor(base64Png: string, options: AdvisorPanelViewOptions = {}) {
-    this.#base64Png = base64Png;
+  constructor(base64Image: string, options: AdvisorPanelViewOptions = {}) {
+    this.#base64Image = base64Image;
+    this.#imageMimeType = options.imageMimeType ?? "image/png";
     this.#note = options.initialNote;
     this.#imageBudget = options.imageBudget;
     this.#imageMaxWidth = normalizeViewCap(options.imageMaxWidth, 20, 8, 40);
@@ -300,8 +303,8 @@ export class AdvisorPanelView implements Component {
         : hostWidth;
       if (!this.#image) {
         this.#image = new Image(
-          this.#base64Png,
-          "image/png",
+          this.#base64Image,
+          this.#imageMimeType,
           { fallbackColor: text => text },
           {
             maxWidthCells: this.#imageMaxWidth,

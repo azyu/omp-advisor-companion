@@ -1,3 +1,6 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "bun:test";
 import type { ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import { AdvisorController, type AdvisorTimerHandle } from "../src/index";
@@ -129,6 +132,49 @@ describe("Advisor companion controller", () => {
     expect(view.bubbleMaxWidth).toBe(72);
     expect(settingsCalls).toEqual([["omp-advisor-companion", "/project"]]);
     expect(imageReads).toBe(1);
+  });
+
+  it("loads an absolute Windows drive path", async () => {
+    const { context } = testContext();
+    const loadedPaths: string[] = [];
+    const controller = new AdvisorController({} as never, {
+      getPluginSettings: async () => ({ imagePath: String.raw`G:\Working\advisor.png` }),
+      loadImage: async path => {
+        loadedPaths.push(path);
+        return PNG;
+      },
+      env: {},
+    });
+
+    await controller.handleMessage(
+      { role: "custom", customType: "advisor", details: { notes: [{ note: "windows path" }] } },
+      context,
+    );
+
+    expect(loadedPaths).toEqual([String.raw`G:\Working\advisor.png`]);
+  });
+
+  it("loads JPEG image data with its MIME type", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "advisor-jpeg-"));
+    const imagePath = join(directory, "advisor.jpg");
+    try {
+      await writeFile(imagePath, new Uint8Array([0xff, 0xd8, 0xff, 0xd9]));
+      const { context, calls, warnings } = testContext();
+      const controller = new AdvisorController({} as never, {
+        getPluginSettings: async () => ({ imagePath }),
+        env: {},
+      });
+
+      await controller.handleMessage(
+        { role: "custom", customType: "advisor", details: { notes: [{ note: "jpeg image" }] } },
+        context,
+      );
+
+      expect(warnings).toEqual([]);
+      expect(widgetFactories(calls)).toHaveLength(1);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   it("keeps repeated activation idempotent without rendering idle state", async () => {

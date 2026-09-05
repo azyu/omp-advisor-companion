@@ -10,7 +10,7 @@
         "type": "string",
         "default": "",
         "env": "OMP_ADVISOR_COMPANION_IMAGE",
-        "description": "Absolute or project-cwd-relative PNG image path."
+        "description": "Absolute or project-cwd-relative PNG or JPEG image path."
       },
       "imageMaxWidth": {
         "type": "number",

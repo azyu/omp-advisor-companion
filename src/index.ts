@@ -1,5 +1,5 @@
 import { homedir } from "node:os";
-import { isAbsolute, resolve } from "node:path";
+import { isAbsolute, resolve, win32 } from "node:path";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
@@ -9,6 +9,8 @@ import { extractAdvisorNotes, parseAdvisorCommand, type AdvisorNote } from "./ad
 
 const WIDGET_KEY = "omp-advisor-companion";
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const JPEG_SIGNATURE = [0xff, 0xd8, 0xff];
+const WINDOWS_DRIVE_ABSOLUTE = /^[A-Za-z]:[\\/]/;
 const BUNDLED_IMAGE_PATH = fileURLToPath(new URL("../assets/advisor.png", import.meta.url));
 
 const DEFAULT_SETTINGS: AdvisorResourceSettings = {
@@ -26,7 +28,12 @@ const SETTING_BOUNDS = {
 } as const;
 
 type Environment = Readonly<Record<string, string | undefined>>;
-type AdvisorImageLoader = (resolvedPath: string) => Promise<string>;
+type AdvisorImageMimeType = "image/png" | "image/jpeg";
+interface AdvisorImage {
+  base64Data: string;
+  mimeType: AdvisorImageMimeType;
+}
+type AdvisorImageLoader = (resolvedPath: string) => Promise<string | AdvisorImage>;
 export type AdvisorTimerHandle = number | Timer;
 export type AdvisorSetTimeout = (callback: () => void, delayMs: number) => AdvisorTimerHandle;
 export type AdvisorClearTimeout = (timer: AdvisorTimerHandle) => void;
@@ -112,25 +119,31 @@ function isUnsafePathReference(path: string): boolean {
   if (path.includes("\0") || path.includes("*") || path.includes("?") || path.includes("{") || path.includes("}")) {
     return true;
   }
-  // A URI scheme (including OMP's internal URI schemes) is not a local path.
-  return /^[A-Za-z][A-Za-z0-9+.-]*:/.test(path);
+  // Keep absolute Windows drive paths from being mistaken for URI schemes.
+  return /^[A-Za-z][A-Za-z0-9+.-]*:/.test(path) && !WINDOWS_DRIVE_ABSOLUTE.test(path);
 }
 
 function resolveImagePath(path: string, cwd: string): string {
   const candidate = path.trim();
   if (candidate.length === 0 || isUnsafePathReference(candidate)) {
-    throw new Error("imagePath must be a local PNG path");
+    throw new Error("imagePath must be a local PNG or JPEG path");
   }
+  if (WINDOWS_DRIVE_ABSOLUTE.test(candidate)) return win32.resolve(candidate);
   if (candidate.startsWith("~/")) return resolve(homedir(), candidate.slice(2));
   return isAbsolute(candidate) ? resolve(candidate) : resolve(cwd, candidate);
 }
 
-async function readAdvisorImage(resolvedPath: string): Promise<string> {
+async function readAdvisorImage(resolvedPath: string): Promise<AdvisorImage> {
   const image = await readFile(resolvedPath);
-  for (let index = 0; index < PNG_SIGNATURE.length; index++) {
-    if (image[index] !== PNG_SIGNATURE[index]) throw new Error("Advisor image is not a PNG");
-  }
-  return Buffer.from(image).toString("base64");
+  const mimeType: AdvisorImageMimeType | undefined = PNG_SIGNATURE.every(
+    (byte, index) => image[index] === byte,
+  )
+    ? "image/png"
+    : JPEG_SIGNATURE.every((byte, index) => image[index] === byte)
+      ? "image/jpeg"
+      : undefined;
+  if (mimeType === undefined) throw new Error("Advisor image must be a PNG or JPEG");
+  return { base64Data: image.toString("base64"), mimeType };
 }
 
 function canUseWidget(context: Pick<ExtensionContext, "mode" | "hasUI">): boolean {
@@ -164,7 +177,7 @@ export class AdvisorController {
   readonly #env: Environment;
   readonly #setTimeout: AdvisorSetTimeout;
   readonly #clearTimeout: AdvisorClearTimeout;
-  readonly #imagePromises = new Map<string, Promise<string>>();
+  readonly #imagePromises = new Map<string, Promise<AdvisorImage>>();
 
   constructor(_api: ExtensionAPI, dependencies: AdvisorControllerDependencies = {}) {
     this.#getPluginSettings = dependencies.getPluginSettings ?? getPluginSettings;
@@ -250,13 +263,14 @@ export class AdvisorController {
     }
   }
 
-  #cachedImage(resolvedPath: string): Promise<string> {
+  #cachedImage(resolvedPath: string): Promise<AdvisorImage> {
     const cached = this.#imagePromises.get(resolvedPath);
     if (cached) return cached;
 
-    let imagePromise: Promise<string>;
+    let imagePromise: Promise<AdvisorImage>;
     imagePromise = Promise.resolve()
       .then(() => this.#loadImage(resolvedPath))
+      .then(image => typeof image === "string" ? { base64Data: image, mimeType: "image/png" as const } : image)
       .catch(error => {
         if (this.#imagePromises.get(resolvedPath) === imagePromise) this.#imagePromises.delete(resolvedPath);
         throw error;
@@ -265,7 +279,7 @@ export class AdvisorController {
     return imagePromise;
   }
 
-  async #loadConfiguredImage(settings: AdvisorResourceSettings, context: ExtensionContext, version: number): Promise<string | undefined> {
+  async #loadConfiguredImage(settings: AdvisorResourceSettings, context: ExtensionContext, version: number): Promise<AdvisorImage | undefined> {
     const configuredPath = settings.imagePath || this.#env.OMP_ADVISOR_COMPANION_IMAGE?.trim() || "";
     const hasOverride = configuredPath.length > 0;
     let resolvedPath: string;
@@ -313,8 +327,8 @@ export class AdvisorController {
     if (version !== this.#widgetVersion || this.#mirrorState !== true) return;
     this.#settings = settings;
 
-    const base64Png = await this.#loadConfiguredImage(settings, context, version);
-    if (base64Png === undefined || version !== this.#widgetVersion || this.#mirrorState !== true) return;
+    const image = await this.#loadConfiguredImage(settings, context, version);
+    if (image === undefined || version !== this.#widgetVersion || this.#mirrorState !== true) return;
     const initialNote = this.#note ?? (settings.alwaysVisible ? { note: "" } : undefined);
     try {
       context.ui.setWidget(
@@ -323,8 +337,9 @@ export class AdvisorController {
           if (version === this.#widgetVersion && this.#mirrorState === true) {
             this.#requestWidgetRender = () => tui.requestRender();
           }
-          return new AdvisorPanelView(base64Png, {
+          return new AdvisorPanelView(image.base64Data, {
             initialNote,
+            imageMimeType: image.mimeType,
             imageBudget: tui.imageBudget,
             imageMaxWidth: settings.imageMaxWidth,
             imageMaxHeight: settings.imageMaxHeight,

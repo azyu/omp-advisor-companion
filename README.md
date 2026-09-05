@@ -141,7 +141,7 @@ omp plugin config set omp-advisor-companion displayDurationSeconds 30
 omp plugin config list omp-advisor-companion
 ```
 
-`imagePath` accepts an absolute local PNG path or a path relative to the active project's OMP `context.cwd`. A leading `~/` is expanded to the user's home directory. URLs, data URIs, globs, and OMP internal URI schemes are not interpreted as image paths.
+`imagePath` accepts an absolute local PNG or JPEG path or a path relative to the active project's OMP `context.cwd`. Windows drive paths are supported; in PowerShell, for example: `omp plugin config set omp-advisor-companion imagePath 'G:\Working\advisor.jpg'`. A leading `~/` is expanded to the user's home directory. URLs, data URIs, globs, and OMP internal URI schemes are not interpreted as image paths.
 
 Project-specific settings go in `.omp/plugin-overrides.json` and override the corresponding global values:
 
@@ -198,7 +198,7 @@ Asset contract:
 - no embedded text or speech bubble
 - 2 MiB or smaller recommended
 
-Replace the file only with an image you have the right to distribute. The extension validates the PNG signature before encoding it for OMP's image component.
+Replace the file only with an image you have the right to distribute. The extension validates configured PNG and JPEG signatures before encoding images for OMP's image component.
 
 ## Development
 

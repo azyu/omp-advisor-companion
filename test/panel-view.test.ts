@@ -109,6 +109,19 @@ describe("Advisor bubble view", () => {
     expect(withoutCountdown.join("\n")).not.toContain("[ hides in ");
   });
 
+  it("renders JPEG data with the JPEG MIME type", () => {
+    const previousProtocol = TERMINAL.imageProtocol;
+    try {
+      setTerminalImageProtocol(null);
+      const view = new AdvisorPanelView("/9j/2Q==", { imageMimeType: "image/jpeg" });
+      view.setNote({ note: "jpeg image" });
+
+      expect(view.render(80).join("\n")).toContain("[image/jpeg");
+    } finally {
+      setTerminalImageProtocol(previousProtocol);
+    }
+  });
+
 
   it("places the latest note beside the image when the host is wide enough", () => {
     const previousProtocol = TERMINAL.imageProtocol;
