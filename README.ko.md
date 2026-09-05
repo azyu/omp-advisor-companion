@@ -104,19 +104,23 @@ OMP를 시작한 뒤 내장 명령을 사용합니다.
 
 ## FAQ
 
-### Ghostty 안의 Herdr에서 OMP를 실행할 때 이미지가 보이지 않는 이유는 무엇인가요?
+### Windows의 WezTerm에서 Herdr 내부 OMP를 실행할 때 이미지가 보이지 않는 이유는 무엇인가요?
 
-화면에 `􎻮` 글리프가 그대로 보인다면 OMP가 이미지를 불러와 Kitty 유니코드 플레이스홀더를 출력했지만 Herdr가 이를 렌더링하지 않은 것입니다. `imagePath` 문제가 아니라 터미널 기능 문제입니다. OMP 18.1.0 이상은 Kitty 그래픽을 명시적으로 활성화하지 않은 Herdr 안에서 안전하게 텍스트 대체 표시를 사용합니다.
+두 가지 경우를 구분해야 합니다.
 
-실제 이미지를 표시하려면 먼저 Herdr의 선택형 렌더러를 활성화하세요.
+- WezTerm에서 OMP를 직접 실행하는 경우: OMP는 Kitty 직접 배치를 사용합니다. WezTerm은 Kitty 유니코드 플레이스홀더를 안정적으로 렌더링하지 않으므로 `PI_KITTY_PLACEHOLDERS=1`을 설정하지 마세요.
+- Herdr 내부에서 OMP를 실행하는 경우: Herdr가 pane 그리드를 소유합니다. OMP 18.1.0 이상은 명시적으로 활성화하지 않는 한 Herdr 안에서 Kitty 출력을 의도적으로 끕니다. Herdr의 기본값인 `kitty_graphics = false`에서는 `Image` 컴포넌트가 텍스트 대체 표시를 사용합니다. 이미지 경로가 원인은 아닙니다.
+
+Herdr 안에서 실제 이미지를 표시하려면 Herdr의 실험적 Kitty 렌더러를 활성화하세요. 네이티브 Windows에서는 Herdr가 `%APPDATA%\herdr\config.toml`을 읽고, Linux 또는 WSL에서는 `~/.config/herdr/config.toml`을 읽습니다.
 
 ```toml
-# ~/.config/herdr/config.toml
 [experimental]
 kitty_graphics = true
 ```
 
-그런 다음 Herdr가 관리하는 셸에서만 Kitty 그래픽을 강제로 사용하세요.
+그런 다음 Herdr가 관리하는 셸에서만 Kitty 프로토콜과 플레이스홀더를 설정하세요.
+
+Git Bash 또는 기타 POSIX 셸:
 
 ```sh
 if [[ "${HERDR_ENV:-}" == "1" ]]; then
@@ -125,7 +129,16 @@ if [[ "${HERDR_ENV:-}" == "1" ]]; then
 fi
 ```
 
-Herdr를 재시작하거나 다시 연결하고 새 pane을 연 뒤 OMP를 재시작해야 이미지 데이터가 다시 전송됩니다. Herdr의 Kitty 렌더러를 활성화하지 않을 경우 두 `PI_` 재정의를 제거하고 OMP를 재시작하세요. 이 경우 원시 플레이스홀더 대신 OMP의 텍스트 대체 표시가 나타나는 것이 안전한 동작입니다.
+PowerShell:
+
+```powershell
+if ($env:HERDR_ENV -eq "1") {
+  $env:PI_FORCE_IMAGE_PROTOCOL = "kitty"
+  $env:PI_KITTY_PLACEHOLDERS = "1"
+}
+```
+
+`herdr server reload-config`를 실행하고 새 Herdr pane을 연 다음 OMP를 재시작해야 렌더러 설정과 환경 변수가 적용됩니다. 이 변수들을 전역으로 export하지 마세요. 직접 실행하는 WezTerm은 일반 Kitty 경로를 사용해야 하고, 지원하지 않는 터미널은 OMP의 텍스트 대체 표시를 사용해야 합니다. 네이티브 Windows와 ConPTY 조합은 터미널에 따라 동작이 달라집니다. Kitty를 활성화한 Herdr에서도 이미지가 표시되지 않으면 WezTerm에서 OMP를 직접 실행하거나 WSL에서 실행하세요. 또는 두 재정의를 제거해 원시 플레이스홀더 글리프 대신 대체 표시를 유지하세요.
 
 ## 리소스 설정
 

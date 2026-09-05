@@ -2,6 +2,7 @@ import {
   Image,
   type ImageBudget,
   type Component,
+  TERMINAL,
   truncateToWidth,
   visibleWidth,
   wrapTextWithAnsi,
@@ -315,15 +316,15 @@ export class AdvisorPanelView implements Component {
         );
       }
       const renderedImage = this.#image.render(sideBySideCandidate ? imageWidth + 2 : hostWidth);
-      const directControlRows =
-        renderedImage.length > 0 && renderedImage.every(line => visibleWidth(line) === 0);
-      const canSideBySide = sideBySideCandidate && !directControlRows && renderedImage.every(line => visibleWidth(line) > 0);
+      const imageControlRows =
+        renderedImage.length > 0 && renderedImage.some(line => TERMINAL.isImageLine(line));
+      const canSideBySide = sideBySideCandidate && !imageControlRows && renderedImage.every(line => visibleWidth(line) > 0);
       const bubbleWidth = Math.min(
         this.#bubbleMaxWidth ?? Number.POSITIVE_INFINITY,
         canSideBySide ? hostWidth - imageWidth - IMAGE_BUBBLE_GAP : hostWidth,
       );
       const bubble = renderBubble(note, bubbleWidth, this.#bubbleMaxWidth, countdownText);
-      const lines: string[] = directControlRows
+      const lines: string[] = imageControlRows
         ? [...renderedImage, "", ...bubble]
         : canSideBySide
           ? renderSideBySide(renderedImage, bubble, imageWidth)

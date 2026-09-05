@@ -104,19 +104,23 @@ The image is loaded lazily when the widget first needs to appear: on a valid Adv
 
 ## FAQ
 
-### Why is the image missing when OMP runs in Herdr inside Ghostty?
+### Why is the image missing in Windows WezTerm when OMP runs inside Herdr?
 
-Raw `􎻮` glyphs mean OMP loaded the image and emitted Kitty Unicode placeholders, but Herdr did not render them. This is a terminal-capability issue, not an `imagePath` issue. OMP 18.1.0 and newer conservatively use the text fallback inside Herdr unless Kitty graphics are explicitly enabled.
+There are two different cases:
 
-To render the actual image, first enable Herdr's opt-in renderer:
+- OMP running directly in WezTerm: OMP uses Kitty direct placement. Do not set `PI_KITTY_PLACEHOLDERS=1`; WezTerm does not reliably render Kitty Unicode placeholders.
+- OMP running inside Herdr: Herdr owns the pane grid. OMP 18.1.0 and newer intentionally disable Kitty output there unless it is explicitly enabled. With Herdr's default `kitty_graphics = false`, the `Image` component shows its text fallback. The image path is not the cause.
+
+To render the actual image inside Herdr, enable Herdr's experimental Kitty renderer. On native Windows, Herdr reads `%APPDATA%\herdr\config.toml`; on Linux or WSL, it reads `~/.config/herdr/config.toml`:
 
 ```toml
-# ~/.config/herdr/config.toml
 [experimental]
 kitty_graphics = true
 ```
 
-Then force Kitty graphics only in Herdr-managed shells:
+Then set the Kitty protocol and placeholders only in Herdr-managed shells.
+
+Git Bash or another POSIX shell:
 
 ```sh
 if [[ "${HERDR_ENV:-}" == "1" ]]; then
@@ -125,7 +129,16 @@ if [[ "${HERDR_ENV:-}" == "1" ]]; then
 fi
 ```
 
-Restart or reattach Herdr, open a new pane, and restart OMP so the image data is transmitted again. If Herdr's Kitty renderer remains disabled, remove both `PI_` overrides and restart OMP; the safe result is OMP's visible text fallback rather than raw placeholders.
+PowerShell:
+
+```powershell
+if ($env:HERDR_ENV -eq "1") {
+  $env:PI_FORCE_IMAGE_PROTOCOL = "kitty"
+  $env:PI_KITTY_PLACEHOLDERS = "1"
+}
+```
+
+Run `herdr server reload-config`, open a new Herdr pane, and restart OMP so the renderer setting and environment variables take effect. Do not export these variables globally: direct WezTerm should use its normal Kitty path, while unsupported terminals need OMP's text fallback. Native Windows and ConPTY combinations remain terminal-dependent; if the enabled Herdr path still cannot render the image, run OMP directly in WezTerm or in WSL, or remove both overrides to keep the visible fallback instead of raw placeholder glyphs.
 
 ## Resource settings
 
