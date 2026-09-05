@@ -280,24 +280,12 @@ export class AdvisorController {
 
   async #loadConfiguredImage(settings: AdvisorResourceSettings, context: ExtensionContext, version: number): Promise<AdvisorImage | undefined> {
     const configuredPath = settings.imagePath || this.#env.OMP_ADVISOR_COMPANION_IMAGE?.trim() || "";
-    const hasOverride = configuredPath.length > 0;
-    let resolvedPath: string;
+    const resolvedPath = configuredPath.length > 0 ? configuredPath : BUNDLED_IMAGE_PATH;
     try {
-      resolvedPath = hasOverride ? resolveImagePath(configuredPath, context.cwd) : BUNDLED_IMAGE_PATH;
-      return await this.#cachedImage(resolvedPath);
+      return await this.#cachedImage(resolveImagePath(resolvedPath, context.cwd));
     } catch (error) {
-      if (!hasOverride) {
-        this.#warnOnce(context, version, "load", error);
-        return undefined;
-      }
-      this.#warnOnce(context, version, "override load", error);
-      if (version !== this.#widgetVersion || this.#mirrorState !== true) return undefined;
-      try {
-        return await this.#cachedImage(BUNDLED_IMAGE_PATH);
-      } catch (fallbackError) {
-        this.#warnOnce(context, version, "load", fallbackError);
-        return undefined;
-      }
+      this.#showImageError(context, version, resolvedPath, error);
+      return undefined;
     }
   }
 
@@ -462,6 +450,19 @@ export class AdvisorController {
     this.#settings = undefined;
     this.#settingsPromise = undefined;
     context.ui.setWidget(WIDGET_KEY, undefined);
+  }
+
+  #showImageError(context: ExtensionContext, version: number, path: string, error: unknown): void {
+    if (version !== this.#widgetVersion || this.#mirrorState !== true) return;
+    const message = `Advisor companion image failed (${path}): ${errorMessage(error)}`;
+    this.#clearHideTimer();
+    this.#requestWidgetRender = undefined;
+    try {
+      context.ui.setWidget(WIDGET_KEY, [message], { placement: "aboveEditor" });
+    } catch {
+      // UI teardown can race an image failure; keep the extension failure contained.
+    }
+    this.#warnOnce(context, version, "image load", error);
   }
 
   #warnOnce(context: ExtensionContext, version: number, operation: string, error: unknown): void {

@@ -183,6 +183,27 @@ describe("Advisor companion controller", () => {
     }
   });
 
+  it("shows a persistent error when the configured image cannot load", async () => {
+    const { context, calls, warnings } = testContext();
+    const controller = new AdvisorController({} as never, {
+      getPluginSettings: async () => ({ imagePath: "./broken.gif", alwaysVisible: true }),
+      loadImage: async () => {
+        throw new Error("unsupported image");
+      },
+      env: {},
+    });
+
+    await controller.handleSessionStart(context);
+
+    expect(calls.at(-1)).toEqual({
+      key: "omp-advisor-companion",
+      content: ["Advisor companion image failed (./broken.gif): unsupported image"],
+      options: { placement: "aboveEditor" },
+    });
+    expect(warnings).toEqual(["Advisor companion widget image load failed: unsupported image"]);
+    expect(widgetFactories(calls)).toHaveLength(0);
+  });
+
   it("keeps repeated activation idempotent without rendering idle state", async () => {
     const { context, calls } = testContext();
     let settingsReads = 0;

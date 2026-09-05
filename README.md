@@ -100,7 +100,7 @@ Behavior:
 - The bare `/advisor` command toggles only after the extension knows the state. With the default settings, an unknown state remains hidden until a real Advisor note arrives.
 - Non-TUI and no-UI OMP modes are silent no-ops.
 
-The image is loaded lazily when the widget first needs to appear: on a valid Advisor message by default, or at session start when `alwaysVisible` is enabled. Each resolved local image path has its own retryable Promise cache: successful loads are reused, while failed loads are removed so a corrected file can be loaded later. An invalid configured override produces one warning for that activation and falls back to the bundled asset; if the bundled asset also fails, the widget remains hidden.
+The image is loaded lazily when the widget first needs to appear: on a valid Advisor message by default, or at session start when `alwaysVisible` is enabled. Each resolved local image path has its own retryable Promise cache: successful loads are reused, while failed loads are removed so a corrected file can be loaded later. An invalid path, unreadable file, or unsupported image displays a persistent error above the editor and emits one warning for that activation.
 
 ## FAQ
 
