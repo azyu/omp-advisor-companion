@@ -1,5 +1,6 @@
 import {
   Image,
+  ImageProtocol,
   type ImageBudget,
   type Component,
   TERMINAL,
@@ -184,6 +185,7 @@ function normalizeOptionalViewCap(value: number | undefined, min: number, max: n
 }
 
 
+const IMAGE_LEFT_MARGIN = 1;
 const IMAGE_BUBBLE_GAP = 1;
 const MIN_SIDE_BY_SIDE_BUBBLE_WIDTH = 20;
 
@@ -201,7 +203,7 @@ function renderSideBySide(
   return Array.from({ length: rows }, (_, index) => {
     const imageLine = fitImageColumn(imageLines[index] ?? "", imageWidth);
     const bubbleLine = bubbleLines[index] ?? "";
-    return `${imageLine}${" ".repeat(IMAGE_BUBBLE_GAP)}${bubbleLine}`;
+    return `${" ".repeat(IMAGE_LEFT_MARGIN)}${imageLine}${" ".repeat(IMAGE_BUBBLE_GAP)}${bubbleLine}`;
   });
 }
 
@@ -296,11 +298,17 @@ export class AdvisorPanelView implements Component {
         return this.#cachedLines;
       }
       const sideBySideCandidate =
-        hostWidth >= this.#imageMaxWidth + IMAGE_BUBBLE_GAP + MIN_SIDE_BY_SIDE_BUBBLE_WIDTH &&
-        Math.min(this.#bubbleMaxWidth ?? hostWidth, hostWidth - this.#imageMaxWidth - IMAGE_BUBBLE_GAP) >=
-          MIN_SIDE_BY_SIDE_BUBBLE_WIDTH;
+        hostWidth >=
+          IMAGE_LEFT_MARGIN + this.#imageMaxWidth + IMAGE_BUBBLE_GAP + MIN_SIDE_BY_SIDE_BUBBLE_WIDTH &&
+        Math.min(
+          this.#bubbleMaxWidth ?? hostWidth,
+          hostWidth - IMAGE_LEFT_MARGIN - this.#imageMaxWidth - IMAGE_BUBBLE_GAP,
+        ) >= MIN_SIDE_BY_SIDE_BUBBLE_WIDTH;
       const imageWidth = sideBySideCandidate
-        ? Math.min(this.#imageMaxWidth, hostWidth - IMAGE_BUBBLE_GAP - MIN_SIDE_BY_SIDE_BUBBLE_WIDTH)
+        ? Math.min(
+            this.#imageMaxWidth,
+            hostWidth - IMAGE_LEFT_MARGIN - IMAGE_BUBBLE_GAP - MIN_SIDE_BY_SIDE_BUBBLE_WIDTH,
+          )
         : hostWidth;
       if (!this.#image) {
         this.#image = new Image(
@@ -321,14 +329,20 @@ export class AdvisorPanelView implements Component {
       const canSideBySide = sideBySideCandidate && !imageControlRows && renderedImage.every(line => visibleWidth(line) > 0);
       const bubbleWidth = Math.min(
         this.#bubbleMaxWidth ?? Number.POSITIVE_INFINITY,
-        canSideBySide ? hostWidth - imageWidth - IMAGE_BUBBLE_GAP : hostWidth,
+        canSideBySide ? hostWidth - IMAGE_LEFT_MARGIN - imageWidth - IMAGE_BUBBLE_GAP : hostWidth,
       );
       const bubble = renderBubble(note, bubbleWidth, this.#bubbleMaxWidth, countdownText);
+      const imageHasDirectKittyPlacement =
+        TERMINAL.imageProtocol === ImageProtocol.Kitty &&
+        renderedImage.some(line => line.includes("\x1b_Ga=T,") || line.includes("\x1b_Ga=p,q=2"));
+      const stackedImage = imageHasDirectKittyPlacement
+        ? renderedImage
+        : renderedImage.map(line => `${" ".repeat(IMAGE_LEFT_MARGIN)}${line}`);
       const lines: string[] = imageControlRows
-        ? [...renderedImage, "", ...bubble]
+        ? [...stackedImage, "", ...bubble]
         : canSideBySide
           ? renderSideBySide(renderedImage, bubble, imageWidth)
-          : [...renderedImage, "", ...bubble];
+          : [...stackedImage, "", ...bubble];
       const fittedLines = lines.map(line => fitLineToWidth(line, hostWidth));
       this.#cachedLines = fittedLines;
       this.#cachedWidth = hostWidth;

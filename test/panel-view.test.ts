@@ -78,14 +78,21 @@ describe("Advisor bubble view", () => {
   });
 
   it("renders nothing until a note is available", () => {
-    const image = new AdvisorPanelView("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
-    expect(image.render(40)).toEqual([]);
+    const previousProtocol = TERMINAL.imageProtocol;
+    try {
+      setTerminalImageProtocol(null);
+      const image = new AdvisorPanelView("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
+      expect(image.render(40)).toEqual([]);
 
-    image.setNote({ note: "latest advice", severity: "nit" });
-    const imageWithNote = image.render(40);
-    expect(imageWithNote.length).toBeGreaterThan(0);
-    expect(imageWithNote.join("\n")).toContain("latest advice");
-    expect(imageWithNote.every(line => visibleWidth(line) <= 40)).toBe(true);
+      image.setNote({ note: "latest advice", severity: "nit" });
+      const imageWithNote = image.render(40);
+      expect(imageWithNote.length).toBeGreaterThan(0);
+      expect(imageWithNote.join("\n")).toContain("latest advice");
+      expect(imageWithNote.find(line => line.includes("[image/png"))?.startsWith(" ")).toBe(true);
+      expect(imageWithNote.every(line => visibleWidth(line) <= 40)).toBe(true);
+    } finally {
+      setTerminalImageProtocol(previousProtocol);
+    }
   });
   it("renders the live countdown inside the bubble bottom border", () => {
     let countdown: string | undefined = "[ hides in 5s ]";
@@ -139,8 +146,9 @@ describe("Advisor bubble view", () => {
       const lines = view.render(80);
       const contentLine = lines.find(line => line.includes("latest advice"));
 
-      expect(contentLine).toBeDefined();
-      expect(contentLine?.startsWith(`${" ".repeat(21)}\x1b[34m│\x1b[0m`)).toBe(true);
+      const imageLine = lines.find(line => line.includes("[image/png"));
+      expect(imageLine?.startsWith(" ")).toBe(true);
+      expect(contentLine?.startsWith(`${" ".repeat(22)}\x1b[34m│\x1b[0m`)).toBe(true);
       expect(lines.some(line => line === "")).toBe(false);
       expect(lines.every(line => visibleWidth(line) <= 80)).toBe(true);
     } finally {
@@ -186,7 +194,7 @@ describe("Advisor bubble view", () => {
     }
   });
 
-  it("keeps Kitty placeholder rows byte-identical before the bubble", () => {
+  it("adds a left margin to Kitty placeholder rows before the bubble", () => {
     const previousProtocol = TERMINAL.imageProtocol;
     const previousGraphics = getKittyGraphics();
     try {
@@ -214,7 +222,7 @@ describe("Advisor bubble view", () => {
 
       expect(contentIndex).toBeGreaterThan(expectedImage.length);
       expect(expectedImage.length).toBeGreaterThan(0);
-      expect(lines.slice(0, expectedImage.length)).toEqual([...expectedImage]);
+      expect(lines.slice(0, expectedImage.length)).toEqual(expectedImage.map(line => ` ${line}`));
       expect(lines[expectedImage.length]).toBe("");
       expect(lines.every(line => visibleWidth(line) <= 80)).toBe(true);
     } finally {

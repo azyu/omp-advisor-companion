@@ -187,7 +187,7 @@ The widget uses `ctx.ui.setWidget("omp-advisor-companion", factory, { placement:
 
 - By default, the widget is absent until a valid Advisor note is available. With `alwaysVisible` enabled, it renders the image and an empty bubble while idle.
 - With enough host width, the image and bubble render side by side; narrower hosts stack the image above the bubble.
-- When Kitty output is used, the self-contained image block remains contiguous and byte-for-byte unchanged before the bubble; no alignment spaces are added.
+- When direct Kitty placement is used, the self-contained image block remains contiguous and byte-for-byte unchanged before the bubble; no alignment spaces are added.
 - Bubble: contained within the configured visible-column cap when set, or the available render width when omitted or narrower.
 - OMP `Image` preserves the source pixel aspect ratio while fitting it inside the configured cell bounds. No special case is needed for 1:1, 2:3, 3:4, landscape, or other PNG ratios.
 - `imageMaxWidth` and `imageMaxHeight` are upper bounds, not forced output dimensions. The schema's `min` values only validate configuration; they do not impose a minimum rendered size.
