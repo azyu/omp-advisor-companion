@@ -142,7 +142,7 @@ if ($env:HERDR_ENV -eq "1") {
 
 ## 리소스 설정
 
-기본 에셋은 중립적인 플레이스홀더 캐릭터 이미지인 `assets/advisor.png`입니다. 전역 설정은 OMP 플러그인 설정 명령으로 관리합니다.
+기본 에셋은 중립적인 플레이스홀더 캐릭터 이미지인 `assets/advisor.png`입니다. 전역 설정은 OMP 플러그인 설정 명령으로 관리하며, 사용자 전역 런타임 상태로 `~/.omp/plugins/omp-plugins.lock.json`의 `settings.omp-advisor-companion`에 저장됩니다.
 
 ```sh
 omp plugin config set omp-advisor-companion imagePath /absolute/path.png
@@ -159,7 +159,7 @@ omp plugin config list omp-advisor-companion
 
 `nitImagePath`, `concernImagePath`, `blockerImagePath`에도 같은 형식의 경로를 지정할 수 있습니다. 메시지 타입에 해당하는 경로가 비어 있지 않으면 그 이미지를 사용하고, 생략하거나 비워 두면 `imagePath`로 폴백합니다. `alwaysVisible`의 대기 이미지도 `imagePath`를 사용합니다.
 
-프로젝트별 설정은 `.omp/plugin-overrides.json`에 작성하며, 대응하는 전역 설정을 덮어씁니다.
+프로젝트별 설정은 `.omp/plugin-overrides.json`에 작성합니다. 이 값은 전역 설정 위에 병합되며 현재 프로젝트에서 전역 설정을 덮어씁니다:
 
 ```json
 {
@@ -183,6 +183,8 @@ omp plugin config list omp-advisor-companion
 2. 병합된 OMP 플러그인 설정에서 비어 있지 않은 프로젝트 또는 전역 `imagePath` 값
 3. `imagePath`가 비어 있을 때 `OMP_ADVISOR_COMPANION_IMAGE`
 4. 번들 플레이스홀더 `assets/advisor.png`
+
+`OMP_ADVISOR_COMPANION_IMAGE`은 실행 시 프로세스 환경에서 읽는 fallback입니다. 적용된 `imagePath`가 비어 있을 때만 사용되며 `omp-plugins.lock.json`에는 저장되지 않습니다.
 
 `alwaysVisible`의 기본값은 `false`입니다. 활성화하면 `displayDurationSeconds`보다 우선하여 대기 그룹을 즉시 표시하고 노트를 자동으로 숨기지 않습니다. 숫자 설정은 유한한 정수로 변환한 뒤 매니페스트에 정의된 범위로 제한합니다. 이미지 너비는 `8`–`40`셀(기본값 `20`), 이미지 높이는 `6`–`30`셀(기본값 `14`), 말풍선 너비는 설정한 경우에만 표시 열 수를 기준으로 `20`–`120`열로 제한합니다. 말풍선 너비를 생략하면 사용 가능한 렌더링 폭을 사용합니다. 표시 시간은 `0`–`3600`초(기본값 `30`)입니다. `alwaysVisible`이 꺼진 상태에서 표시 시간을 `0`으로 설정하면 처음 표시된 노트를 카운트다운 없이 유지하지만 그 노트가 도착하기 전에는 대기 위젯을 표시하지 않습니다. 위젯이 숨겨지거나 `/advisor off`를 실행하거나 세션을 정리하면 카운트다운도 사라집니다. 변경 사항은 `/advisor off` 후 `/advisor on`을 실행하면 적용되며, OMP를 재시작해도 적용됩니다.
 

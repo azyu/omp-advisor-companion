@@ -142,7 +142,7 @@ Run `herdr server reload-config`, open a new Herdr pane, and restart OMP so the 
 
 ## Resource settings
 
-The bundled default is `assets/advisor.png`, a neutral placeholder character image. Global settings use OMP's plugin configuration commands:
+The bundled default is `assets/advisor.png`, a neutral placeholder character image. Global settings use OMP's plugin configuration commands and are persisted as user-global runtime state in `~/.omp/plugins/omp-plugins.lock.json` under `settings.omp-advisor-companion`:
 
 ```sh
 omp plugin config set omp-advisor-companion imagePath /absolute/path.png
@@ -159,7 +159,7 @@ omp plugin config list omp-advisor-companion
 
 `nitImagePath`, `concernImagePath`, and `blockerImagePath` accept the same path forms. A non-empty severity-specific path is used for that note type; an omitted or empty value falls back to `imagePath`. The idle image shown by `alwaysVisible` also uses `imagePath`.
 
-Project-specific settings go in `.omp/plugin-overrides.json` and override the corresponding global values:
+Project-specific settings go in `.omp/plugin-overrides.json`. They are merged on top of the global settings and take precedence for the current project:
 
 ```json
 {
@@ -183,6 +183,8 @@ The effective settings precedence is:
 2. A non-empty project or global `imagePath` value from the merged OMP plugin settings;
 3. `OMP_ADVISOR_COMPANION_IMAGE` when `imagePath` is empty;
 4. The bundled `assets/advisor.png` placeholder.
+
+`OMP_ADVISOR_COMPANION_IMAGE` is read from the process environment at runtime. It is only a fallback when the effective `imagePath` is empty and is not written to `omp-plugins.lock.json`.
 
 `alwaysVisible` defaults to `false`. When enabled, it overrides `displayDurationSeconds`: the idle group appears immediately and notes never auto-hide. Numeric settings are normalized to finite integers and clamped to their manifest ranges: image width `8`–`40` cells (default `20`), image height `6`–`30` cells (default `14`), bubble width `20`–`120` visible columns when configured, and display duration `0`–`3600` seconds (default `30`). When `bubbleMaxWidth` is omitted, the bubble uses the available render width. With `alwaysVisible` disabled, a display duration of `0` keeps the first displayed note visible without a countdown but does not show an idle widget before that note. The countdown disappears when the widget hides, `/advisor off` runs, or the session is cleaned up. Changes apply after `/advisor off` followed by `/advisor on`; restarting OMP also applies them.
 
