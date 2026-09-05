@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "bun:test";
 import type { ExtensionContext } from "@oh-my-pi/pi-coding-agent";
+import { setTerminalImageProtocol, TERMINAL } from "@oh-my-pi/pi-tui";
 import { AdvisorController, type AdvisorTimerHandle } from "../src/index";
 import { AdvisorPanelView } from "../src/panel-view";
 
@@ -154,11 +155,13 @@ describe("Advisor companion controller", () => {
     expect(loadedPaths).toEqual([String.raw`G:\Working\advisor.png`]);
   });
 
-  it("loads JPEG image data with its MIME type", async () => {
+  it("transcodes JPEG image data to PNG for Kitty graphics", async () => {
     const directory = await mkdtemp(join(tmpdir(), "advisor-jpeg-"));
     const imagePath = join(directory, "advisor.jpg");
+    const previousProtocol = TERMINAL.imageProtocol;
     try {
-      await writeFile(imagePath, new Uint8Array([0xff, 0xd8, 0xff, 0xd9]));
+      const jpeg = await new Bun.Image(Buffer.from(PNG, "base64")).jpeg().bytes();
+      await writeFile(imagePath, jpeg);
       const { context, calls, warnings } = testContext();
       const controller = new AdvisorController({} as never, {
         getPluginSettings: async () => ({ imagePath }),
@@ -170,9 +173,12 @@ describe("Advisor companion controller", () => {
         context,
       );
 
+      setTerminalImageProtocol(null);
+      const view = componentFrom(widgetFactories(calls)[0]!);
       expect(warnings).toEqual([]);
-      expect(widgetFactories(calls)).toHaveLength(1);
+      expect(view.render(80).join("\n")).toContain("[image/png]");
     } finally {
+      setTerminalImageProtocol(previousProtocol);
       await rm(directory, { recursive: true, force: true });
     }
   });

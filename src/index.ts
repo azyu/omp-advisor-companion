@@ -135,15 +135,14 @@ function resolveImagePath(path: string, cwd: string): string {
 
 async function readAdvisorImage(resolvedPath: string): Promise<AdvisorImage> {
   const image = await readFile(resolvedPath);
-  const mimeType: AdvisorImageMimeType | undefined = PNG_SIGNATURE.every(
-    (byte, index) => image[index] === byte,
-  )
-    ? "image/png"
-    : JPEG_SIGNATURE.every((byte, index) => image[index] === byte)
-      ? "image/jpeg"
-      : undefined;
-  if (mimeType === undefined) throw new Error("Advisor image must be a PNG or JPEG");
-  return { base64Data: image.toString("base64"), mimeType };
+  if (PNG_SIGNATURE.every((byte, index) => image[index] === byte)) {
+    return { base64Data: image.toString("base64"), mimeType: "image/png" };
+  }
+  if (JPEG_SIGNATURE.every((byte, index) => image[index] === byte)) {
+    const png = await new Bun.Image(image).png().bytes();
+    return { base64Data: Buffer.from(png).toString("base64"), mimeType: "image/png" };
+  }
+  throw new Error("Advisor image must be a PNG or JPEG");
 }
 
 function canUseWidget(context: Pick<ExtensionContext, "mode" | "hasUI">): boolean {
