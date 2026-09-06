@@ -281,7 +281,7 @@ To update an existing GitHub installation, run the repository install command:
 omp plugin install github:azyu/omp-advisor-companion
 ```
 
-A successful reinstall of this release reports `✔ Installed omp-advisor-companion@0.1.2` and preserves existing plugin settings, including `imagePath`. The `omp plugin upgrade omp-advisor-companion` command is not the working upgrade path for this installation.
+A successful reinstall of this release reports `✔ Installed omp-advisor-companion@0.1.3` and preserves existing plugin settings, including `imagePath`. The `omp plugin upgrade omp-advisor-companion` command is not the working upgrade path for this installation.
 
 Restart OMP after updating. `/reload-plugins` does not re-import extension factories in the running process.
 
