@@ -156,7 +156,6 @@ describe("Advisor bubble view", () => {
       setKittyGraphics(previousGraphics);
     }
   });
-
   it("keeps direct Kitty placements byte-identical before the bubble", () => {
     const previousProtocol = TERMINAL.imageProtocol;
     const previousGraphics = getKittyGraphics();
@@ -233,36 +232,28 @@ describe("Advisor bubble view", () => {
     }
   });
 
-  it("adds a left margin to Kitty placeholder rows before the bubble", () => {
+  it("places Kitty placeholder images beside the bubble", () => {
     const previousProtocol = TERMINAL.imageProtocol;
     const previousGraphics = getKittyGraphics();
     try {
       setTerminalImageProtocol(ImageProtocol.Kitty);
       setKittyGraphics({ unicodePlaceholders: true });
 
-      const base64Png =
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
-      const imageBudget = new ImageBudget(8);
-      const expectedImage = new Image(
-        base64Png,
-        "image/png",
-        { fallbackColor: text => text },
-        {
-          maxWidthCells: 20,
-          maxHeightCells: 14,
-          imageKey: "advisor-character",
-          budget: imageBudget,
-        },
-      ).render(22);
-      const view = new AdvisorPanelView(base64Png, { imageBudget });
+      const view = new AdvisorPanelView(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+        { imageBudget: new ImageBudget(8) },
+      );
       view.setNote({ note: "latest advice", severity: "nit" });
+
       const lines = view.render(80);
       const contentIndex = lines.findIndex(line => line.includes("latest advice"));
+      const placeholderIndex = lines.findIndex(line => line.includes("\u{10eeee}"));
 
-      expect(contentIndex).toBeGreaterThan(expectedImage.length);
-      expect(expectedImage.length).toBeGreaterThan(0);
-      expect(lines.slice(0, expectedImage.length)).toEqual(expectedImage.map(line => ` ${line}`));
-      expect(lines[expectedImage.length]).toBe("");
+      expect(contentIndex).toBeGreaterThanOrEqual(0);
+      expect(placeholderIndex).toBeGreaterThanOrEqual(0);
+      expect(placeholderIndex).toBeLessThan(contentIndex);
+      expect(lines[contentIndex]).toContain(`${" ".repeat(22)}\x1b[34m│\x1b[0m`);
+      expect(lines.some(line => line === "")).toBe(false);
       expect(lines.every(line => visibleWidth(line) <= 80)).toBe(true);
     } finally {
       setTerminalImageProtocol(previousProtocol);

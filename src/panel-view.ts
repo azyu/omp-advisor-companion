@@ -189,6 +189,7 @@ function normalizeOptionalViewCap(value: number | undefined, min: number, max: n
 const IMAGE_LEFT_MARGIN = 1;
 const IMAGE_BUBBLE_GAP = 1;
 const MIN_SIDE_BY_SIDE_BUBBLE_WIDTH = 20;
+const KITTY_PLACEHOLDER = "\u{10eeee}";
 
 function fitImageColumn(line: string, width: number): string {
   const fitted = visibleWidth(line) > width ? truncateToWidth(line, width, null, false) : line;
@@ -327,17 +328,18 @@ export class AdvisorPanelView implements Component {
         );
       }
       const renderedImage = this.#image.render(sideBySideCandidate ? imageWidth + 2 : hostWidth);
+      const imageHasDirectKittyPlacement =
+        TERMINAL.imageProtocol === ImageProtocol.Kitty &&
+        renderedImage.some(line => line.includes("\x1b_Ga=T,") || line.includes("\x1b_Ga=p,q=2"));
       const imageControlRows =
-        renderedImage.length > 0 && renderedImage.some(line => TERMINAL.isImageLine(line));
+        renderedImage.length > 0 &&
+        renderedImage.some(line => TERMINAL.isImageLine(line) && !line.includes(KITTY_PLACEHOLDER));
       const canSideBySide = sideBySideCandidate && !imageControlRows && renderedImage.every(line => visibleWidth(line) > 0);
       const bubbleWidth = Math.min(
         this.#bubbleMaxWidth ?? Number.POSITIVE_INFINITY,
         canSideBySide ? hostWidth - IMAGE_LEFT_MARGIN - imageWidth - IMAGE_BUBBLE_GAP : hostWidth,
       );
       const bubble = renderBubble(note, bubbleWidth, this.#bubbleMaxWidth, countdownText);
-      const imageHasDirectKittyPlacement =
-        TERMINAL.imageProtocol === ImageProtocol.Kitty &&
-        renderedImage.some(line => line.includes("\x1b_Ga=T,") || line.includes("\x1b_Ga=p,q=2"));
       const stackedImage = imageHasDirectKittyPlacement
         ? renderedImage
         : renderedImage.map(line => `${" ".repeat(IMAGE_LEFT_MARGIN)}${line}`);
