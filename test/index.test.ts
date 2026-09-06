@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "bun:test";
 import type { ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import { ImageBudget, setTerminalImageProtocol, TERMINAL } from "@oh-my-pi/pi-tui";
-import { AdvisorController, type AdvisorTimerHandle } from "../src/index";
+import advisorCharacterExtension, { AdvisorController, type AdvisorTimerHandle } from "../src/index";
 import { AdvisorPanelView } from "../src/panel-view";
 
 const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
@@ -203,6 +203,45 @@ describe("Advisor companion controller", () => {
       "Preview: concern",
       "Preview: blocker",
       "Preview: default",
+    ]);
+  });
+  it("offers face completions and explains bare or invalid invocations", async () => {
+    type CommandRegistration = {
+      description?: string;
+      getArgumentCompletions?: (argumentPrefix: string) => unknown[] | null;
+      handler: (args: string, context: ExtensionContext) => Promise<void>;
+    };
+    const commands: Record<string, CommandRegistration> = {};
+    const api = {
+      registerCommand(name: string, options: CommandRegistration) {
+        commands[name] = options;
+      },
+      on() {},
+    };
+
+    advisorCharacterExtension(api as never);
+
+    const command = commands["advisor-face"];
+    expect(command).toBeDefined();
+    if (!command) throw new Error("advisor-face command was not registered");
+    expect(command.description).toContain("<nit|concern|blocker|default>");
+    expect(command.getArgumentCompletions?.("")).toEqual([
+      { value: "nit", label: "nit", description: "Preview the nit image" },
+      { value: "concern", label: "concern", description: "Preview the concern image" },
+      { value: "blocker", label: "blocker", description: "Preview the blocker image" },
+      { value: "default", label: "default", description: "Preview the default image" },
+    ]);
+    expect(command.getArgumentCompletions?.("co")).toEqual([
+      { value: "concern", label: "concern", description: "Preview the concern image" },
+    ]);
+    expect(command.getArgumentCompletions?.("concern now")).toBeNull();
+
+    const { context, warnings } = testContext();
+    await command.handler("", context);
+    await command.handler("warning", context);
+    expect(warnings).toEqual([
+      "Usage: /advisor-face <nit|concern|blocker|default>",
+      "Usage: /advisor-face <nit|concern|blocker|default>",
     ]);
   });
   it("forgets transmitted image data when the severity path changes", async () => {

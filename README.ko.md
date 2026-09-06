@@ -84,16 +84,14 @@ OMP를 시작한 뒤 내장 명령을 사용합니다.
 /advisor on
 /advisor status
 /advisor off
-/advisor-face nit
-/advisor-face concern
-/advisor-face blocker
-/advisor-face default
+/advisor-face <nit|concern|blocker|default>
 ```
 
 동작 방식:
 
 - `/advisor on`은 미러링을 활성화하지만, 기본적으로는 유효한 Advisor 메시지가 도착할 때까지 위젯을 숨깁니다. 반복 실행해도 결과는 같습니다.
 - `/advisor-face nit`, `/advisor-face concern`, `/advisor-face blocker`, `/advisor-face default`는 테스트를 위해 해당 이미지를 즉시 미리 표시합니다. 실제 Advisor 노트가 도착하면 severity 기반 이미지 선택으로 돌아갑니다.
+- `/advisor-face `를 입력하면 `nit`, `concern`, `blocker`, `default` 자동완성이 표시됩니다. 인수 없이 `/advisor-face`를 실행하면 같은 사용법을 안내하고, 잘못된 인수에는 경고를 표시합니다.
 - 위젯은 호스트 폭이 충분하면 이미지와 말풍선을 나란히 표시하고, 좁으면 이미지를 말풍선 위에 배치합니다.
 - Kitty 직접 출력을 사용할 때는 자체 완결형 이미지 블록을 말풍선 앞에 끊김 없이 배치하며 정렬용 공백을 추가하지 않습니다. 이미지 블록은 바이트 단위로 동일하게 유지됩니다.
 - 말풍선 헤더에는 `Advisor`나 Advisor 이름 없이 `<concern>`과 같은 심각도 태그만 표시합니다.

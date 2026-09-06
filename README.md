@@ -86,16 +86,14 @@ Start OMP, then use the built-in commands:
 /advisor on
 /advisor status
 /advisor off
-/advisor-face nit
-/advisor-face concern
-/advisor-face blocker
-/advisor-face default
+/advisor-face <nit|concern|blocker|default>
 ```
 
 Behavior:
 
 - `/advisor on` enables mirroring but, by default, keeps the widget hidden until a valid Advisor message arrives. Repeated activation is idempotent.
 - `/advisor-face nit`, `/advisor-face concern`, `/advisor-face blocker`, and `/advisor-face default` immediately preview the corresponding configured image for manual testing. A real Advisor note returns to severity-driven selection.
+- Typing `/advisor-face ` opens completions for `nit`, `concern`, `blocker`, and `default`. Running `/advisor-face` without an argument shows the same usage, and an invalid argument shows a warning.
 - When Kitty output is used, the self-contained image block remains contiguous and byte-for-byte unchanged before the bubble; no alignment spaces are added.
 - A valid Advisor message creates or replaces the image-and-bubble group with the latest valid note unless mirroring was explicitly turned off.
 - With `alwaysVisible: true`, session start and `/advisor on` immediately show the image with an empty idle bubble. Advisor notes then remain visible without a countdown until replaced, `/advisor off` runs, or the session ends.

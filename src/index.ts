@@ -7,6 +7,25 @@ import { getPluginSettings } from "@oh-my-pi/pi-coding-agent/extensibility/plugi
 import { AdvisorPanelView } from "./panel-view";
 import { extractAdvisorNotes, parseAdvisorCommand, type AdvisorFace, type AdvisorNote } from "./advisor-events";
 
+const ADVISOR_FACE_USAGE = "<nit|concern|blocker|default>";
+const ADVISOR_FACE_COMPLETIONS = [
+  { value: "nit", label: "nit", description: "Preview the nit image" },
+  { value: "concern", label: "concern", description: "Preview the concern image" },
+  { value: "blocker", label: "blocker", description: "Preview the blocker image" },
+  { value: "default", label: "default", description: "Preview the default image" },
+] satisfies ReadonlyArray<{ value: AdvisorFace; label: string; description: string }>;
+
+function getAdvisorFaceCompletions(argumentPrefix: string) {
+  if (argumentPrefix.includes(" ")) return null;
+  const prefix = argumentPrefix.trim().toLowerCase();
+  const matches = ADVISOR_FACE_COMPLETIONS.filter(face => face.value.startsWith(prefix));
+  return matches.length > 0 ? matches : null;
+}
+
+function advisorFaceUsage(context: ExtensionContext, level: "info" | "warning"): void {
+  context.ui.notify(`Usage: /advisor-face ${ADVISOR_FACE_USAGE}`, level);
+}
+
 const WIDGET_KEY = "omp-advisor-companion";
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const JPEG_SIGNATURE = [0xff, 0xd8, 0xff];
@@ -531,9 +550,16 @@ export class AdvisorController {
 export default function advisorCharacterExtension(api: ExtensionAPI): void {
   const controller = new AdvisorController(api);
   api.registerCommand("advisor-face", {
-    description: "Preview a configured Advisor companion image",
+    description: `Preview a configured Advisor companion image ${ADVISOR_FACE_USAGE}`,
+    getArgumentCompletions: getAdvisorFaceCompletions,
     async handler(args, context): Promise<void> {
-      await controller.handleInput(`/advisor face ${args.trim()}`, context);
+      const face = args.trim();
+      const command = parseAdvisorCommand(`/advisor face ${face}`);
+      if (typeof command !== "object" || command.kind !== "face") {
+        advisorFaceUsage(context, face.length === 0 ? "info" : "warning");
+        return;
+      }
+      await controller.handleInput(`/advisor face ${command.face}`, context);
     },
   });
 
