@@ -2,11 +2,15 @@ import { describe, expect, it } from "bun:test";
 import { extractAdvisorNotes, parseAdvisorCommand } from "../src/advisor-events";
 
 describe("Advisor event helpers", () => {
-  it("recognizes only exact trimmed commands", () => {
+  it("recognizes built-in and exact face preview commands", () => {
     expect(parseAdvisorCommand(" /advisor on ")).toBe("on");
     expect(parseAdvisorCommand("/advisor off")).toBe("off");
     expect(parseAdvisorCommand("/advisor")).toBe("toggle");
     expect(parseAdvisorCommand("/advisor status")).toBe("status");
+    expect(parseAdvisorCommand("/advisor face nit")).toEqual({ kind: "face", face: "nit" });
+    expect(parseAdvisorCommand("/advisor face default")).toEqual({ kind: "face", face: "default" });
+    expect(parseAdvisorCommand("/advisor face warning")).toBeUndefined();
+    expect(parseAdvisorCommand("/advisor face nit now")).toBeUndefined();
     expect(parseAdvisorCommand("/advisor on now")).toBeUndefined();
     expect(parseAdvisorCommand("advisor on")).toBeUndefined();
   });

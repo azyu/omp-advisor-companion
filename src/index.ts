@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import { getPluginSettings } from "@oh-my-pi/pi-coding-agent/extensibility/plugins/loader";
 import { AdvisorPanelView } from "./panel-view";
-import { extractAdvisorNotes, parseAdvisorCommand, type AdvisorNote } from "./advisor-events";
+import { extractAdvisorNotes, parseAdvisorCommand, type AdvisorFace, type AdvisorNote } from "./advisor-events";
 
 const WIDGET_KEY = "omp-advisor-companion";
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
@@ -35,6 +35,9 @@ type AdvisorImageMimeType = "image/png" | "image/jpeg";
 interface AdvisorImage {
   base64Data: string;
   mimeType: AdvisorImageMimeType;
+}
+interface LoadedAdvisorImage extends AdvisorImage {
+  imagePath: string;
 }
 type AdvisorImageLoader = (resolvedPath: string) => Promise<string | AdvisorImage>;
 export type AdvisorTimerHandle = number | Timer;
@@ -177,6 +180,7 @@ function errorMessage(error: unknown): string {
 export class AdvisorController {
   #mirrorState: boolean | undefined;
   #note: AdvisorNote | undefined;
+  #forcedFace: AdvisorFace | undefined;
   #settings: AdvisorResourceSettings | undefined;
   #settingsPromise: Promise<AdvisorResourceSettings> | undefined;
   #widgetVersion = 0;
@@ -189,6 +193,7 @@ export class AdvisorController {
   readonly #setTimeout: AdvisorSetTimeout;
   readonly #clearTimeout: AdvisorClearTimeout;
   readonly #imagePromises = new Map<string, Promise<AdvisorImage>>();
+  #imagePath: string | undefined;
 
   constructor(_api: ExtensionAPI, dependencies: AdvisorControllerDependencies = {}) {
     this.#getPluginSettings = dependencies.getPluginSettings ?? getPluginSettings;
@@ -206,6 +211,17 @@ export class AdvisorController {
     if (!canUseWidget(context)) return;
     const command = parseAdvisorCommand(text);
     if (command === undefined || command === "status") return;
+    if (typeof command === "object" && command.kind === "face") {
+      this.#mirrorState = true;
+      this.#forcedFace = command.face;
+      this.#warningIssued = false;
+      this.#note = {
+        note: `Preview: ${command.face}`,
+        severity: command.face === "default" ? undefined : command.face,
+      };
+      await this.#activate(context);
+      return;
+    }
     if (command === "off") {
       this.#mirrorState = false;
       this.#note = undefined;
@@ -244,6 +260,7 @@ export class AdvisorController {
     if (!canUseWidget(context) || this.#mirrorState === false) return;
     const notes = extractAdvisorNotes(message);
     if (notes.length === 0) return;
+    this.#forcedFace = undefined;
     this.#note = notes[notes.length - 1];
     await this.#activate(context);
   }
@@ -290,19 +307,29 @@ export class AdvisorController {
     return imagePromise;
   }
 
-  async #loadConfiguredImage(settings: AdvisorResourceSettings, context: ExtensionContext, version: number): Promise<AdvisorImage | undefined> {
+  async #loadConfiguredImage(
+    settings: AdvisorResourceSettings,
+    context: ExtensionContext,
+    version: number,
+  ): Promise<LoadedAdvisorImage | undefined> {
+    const severity =
+      this.#forcedFace === "default"
+        ? undefined
+        : this.#forcedFace ?? this.#note?.severity;
     const severityPath =
-      this.#note?.severity === "nit"
+      severity === "nit"
         ? settings.nitImagePath
-        : this.#note?.severity === "concern"
+        : severity === "concern"
           ? settings.concernImagePath
-          : this.#note?.severity === "blocker"
+          : severity === "blocker"
             ? settings.blockerImagePath
             : "";
     const configuredPath = severityPath || settings.imagePath || this.#env.OMP_ADVISOR_COMPANION_IMAGE?.trim() || "";
     const resolvedPath = configuredPath.length > 0 ? configuredPath : BUNDLED_IMAGE_PATH;
     try {
-      return await this.#cachedImage(resolveImagePath(resolvedPath, context.cwd));
+      const resolvedImagePath = resolveImagePath(resolvedPath, context.cwd);
+      const image = await this.#cachedImage(resolvedImagePath);
+      return { ...image, imagePath: resolvedImagePath };
     } catch (error) {
       this.#showImageError(context, version, resolvedPath, error);
       return undefined;
@@ -343,6 +370,10 @@ export class AdvisorController {
         tui => {
           if (version === this.#widgetVersion && this.#mirrorState === true) {
             this.#requestWidgetRender = () => tui.requestRender();
+          }
+          if (tui.imageBudget && this.#imagePath !== image.imagePath) {
+            tui.imageBudget.forgetTransmitted();
+            this.#imagePath = image.imagePath;
           }
           return new AdvisorPanelView(image.base64Data, {
             initialNote,
@@ -467,6 +498,7 @@ export class AdvisorController {
     this.#requestWidgetRender = undefined;
     this.#widgetVersion++;
     this.#note = undefined;
+    this.#forcedFace = undefined;
     this.#settings = undefined;
     this.#settingsPromise = undefined;
     context.ui.setWidget(WIDGET_KEY, undefined);
@@ -498,6 +530,12 @@ export class AdvisorController {
 
 export default function advisorCharacterExtension(api: ExtensionAPI): void {
   const controller = new AdvisorController(api);
+  api.registerCommand("advisor-face", {
+    description: "Preview a configured Advisor companion image",
+    async handler(args, context): Promise<void> {
+      await controller.handleInput(`/advisor face ${args.trim()}`, context);
+    },
+  });
 
   api.on("input", (event, context) => controller.handleInput(event.text, context));
   api.on("message_start", (event, context) => controller.handleMessageStart(event.message, context));

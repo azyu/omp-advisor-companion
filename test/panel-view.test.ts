@@ -193,6 +193,45 @@ describe("Advisor bubble view", () => {
       setKittyGraphics(previousGraphics);
     }
   });
+  it("retransmits replacement images under one stable budget key", () => {
+    const previousProtocol = TERMINAL.imageProtocol;
+    const previousGraphics = getKittyGraphics();
+    try {
+      setTerminalImageProtocol(ImageProtocol.Kitty);
+      setKittyGraphics({ unicodePlaceholders: false });
+
+      const defaultPng =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+      const blockerPng =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAADUExURf8AABniCTcAAAAHdElNRQfqCQYOMASBxXAJAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDI2LTA5LTA2VDE0OjQ4OjA0KzAwOjAw+UhUzgAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyNi0wOS0wNlQxNDo0ODowNCswMDowMIgV7HIAAAAodEVYdGRhdGU6dGltZXN0YW1wADIwMjYtMDktMDZUMTQ6NDg6MDQrMDA6MDDfAM2tAAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==";
+      const imageBudget = new ImageBudget(8);
+      const defaultView = new AdvisorPanelView(defaultPng, {
+        imageBudget,
+        initialNote: { note: "default" },
+      });
+      const blockerView = new AdvisorPanelView(blockerPng, {
+        imageBudget,
+        initialNote: { note: "blocker", severity: "blocker" },
+      });
+
+      defaultView.render(80);
+      const defaultTransmit = imageBudget.takeTransmits().join("\n");
+      imageBudget.forgetTransmitted();
+      blockerView.render(80);
+      const blockerTransmit = imageBudget.takeTransmits().join("\n");
+      const defaultId = defaultTransmit.match(/a=t,f=100,q=2,i=(\d+)/)?.[1];
+      const blockerId = blockerTransmit.match(/a=t,f=100,q=2,i=(\d+)/)?.[1];
+
+      expect(defaultTransmit).toContain(defaultPng);
+      expect(blockerTransmit).toContain(blockerPng);
+      expect(blockerTransmit).not.toContain(defaultPng);
+      expect(defaultId).toBeDefined();
+      expect(blockerId).toBe(defaultId);
+    } finally {
+      setTerminalImageProtocol(previousProtocol);
+      setKittyGraphics(previousGraphics);
+    }
+  });
 
   it("adds a left margin to Kitty placeholder rows before the bubble", () => {
     const previousProtocol = TERMINAL.imageProtocol;

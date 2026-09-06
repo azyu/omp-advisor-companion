@@ -3,11 +3,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "bun:test";
 import type { ExtensionContext } from "@oh-my-pi/pi-coding-agent";
-import { setTerminalImageProtocol, TERMINAL } from "@oh-my-pi/pi-tui";
+import { ImageBudget, setTerminalImageProtocol, TERMINAL } from "@oh-my-pi/pi-tui";
 import { AdvisorController, type AdvisorTimerHandle } from "../src/index";
 import { AdvisorPanelView } from "../src/panel-view";
 
 const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+const JPEG =
+  "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsK" +
+  "CwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/wAALCAABAAEBAREA/8QAFAABAAAAAAAA" +
+  "AAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AVN//2Q==";
 
 type WidgetCall = {
   key: string;
@@ -40,7 +44,7 @@ function testContext(mode: ExtensionContext["mode"] = "tui", hasUI = true): {
 }
 
 type WidgetTui = {
-  imageBudget?: never;
+  imageBudget?: ImageBudget;
   requestRender: () => void;
 };
 
@@ -164,6 +168,80 @@ describe("Advisor companion controller", () => {
       "blocker",
     ]);
   });
+  it("previews each configured face through slash commands", async () => {
+    const { context, calls } = testContext();
+    const loadedPaths: string[] = [];
+    const controller = new AdvisorController({} as never, {
+      getPluginSettings: async () => ({
+        imagePath: "/tmp/default.png",
+        nitImagePath: "/tmp/nit.png",
+        concernImagePath: "/tmp/concern.png",
+        blockerImagePath: "/tmp/blocker.png",
+        displayDurationSeconds: 0,
+      }),
+      loadImage: async path => {
+        loadedPaths.push(path);
+        return PNG;
+      },
+      env: {},
+    });
+
+    for (const face of ["nit", "concern", "blocker", "default"] as const) {
+      await controller.handleInput(`/advisor face ${face}`, context);
+    }
+
+    const views = widgetFactories(calls).map(factory => componentFrom(factory));
+    expect(loadedPaths).toEqual([
+      "/tmp/nit.png",
+      "/tmp/concern.png",
+      "/tmp/blocker.png",
+      "/tmp/default.png",
+    ]);
+    expect(views.map(view => view.note?.severity)).toEqual(["nit", "concern", "blocker", undefined]);
+    expect(views.map(view => view.note?.note)).toEqual([
+      "Preview: nit",
+      "Preview: concern",
+      "Preview: blocker",
+      "Preview: default",
+    ]);
+  });
+  it("forgets transmitted image data when the severity path changes", async () => {
+    const { context, calls } = testContext();
+    let forgetCount = 0;
+    const imageBudget = {
+      forgetTransmitted() {
+        forgetCount++;
+      },
+    } as unknown as ImageBudget;
+    const controller = new AdvisorController({} as never, {
+      getPluginSettings: async () => ({
+        imagePath: "/tmp/default.png",
+        blockerImagePath: "/tmp/blocker.png",
+        displayDurationSeconds: 0,
+      }),
+      loadImage: async () => PNG,
+      env: {},
+    });
+    const renderFactory = (index: number) => widgetFactories(calls)[index]({ imageBudget, requestRender() {} });
+
+    await controller.handleMessage(
+      { role: "custom", customType: "advisor", details: { notes: [{ note: "default" }] } },
+      context,
+    );
+    renderFactory(0);
+    await controller.handleMessage(
+      { role: "custom", customType: "advisor", details: { notes: [{ note: "blocker", severity: "blocker" }] } },
+      context,
+    );
+    renderFactory(1);
+    await controller.handleMessage(
+      { role: "custom", customType: "advisor", details: { notes: [{ note: "blocker again", severity: "blocker" }] } },
+      context,
+    );
+    renderFactory(2);
+
+    expect(forgetCount).toBe(2);
+  });
 
   it("loads an absolute Windows drive path", async () => {
     const { context } = testContext();
@@ -185,13 +263,12 @@ describe("Advisor companion controller", () => {
     expect(loadedPaths).toEqual([String.raw`G:\Working\advisor.png`]);
   });
 
-  it("transcodes JPEG image data to PNG for Kitty graphics", async () => {
+  it.skipIf(typeof Bun.Image !== "function")("transcodes JPEG image data to PNG for Kitty graphics", async () => {
     const directory = await mkdtemp(join(tmpdir(), "advisor-jpeg-"));
     const imagePath = join(directory, "advisor.jpg");
     const previousProtocol = TERMINAL.imageProtocol;
     try {
-      const jpeg = await new Bun.Image(Buffer.from(PNG, "base64")).jpeg().bytes();
-      await writeFile(imagePath, jpeg);
+      await writeFile(imagePath, Buffer.from(JPEG, "base64"));
       const { context, calls, warnings } = testContext();
       const controller = new AdvisorController({} as never, {
         getPluginSettings: async () => ({ imagePath }),

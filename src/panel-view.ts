@@ -166,6 +166,7 @@ export function renderBubble(note: AdvisorNote, width: number, maxWidth?: number
 export interface AdvisorPanelViewOptions {
   initialNote?: AdvisorNote;
   imageMimeType?: "image/png" | "image/jpeg";
+  imageKey?: string;
   imageBudget?: ImageBudget;
   imageMaxWidth?: number;
   imageMaxHeight?: number;
@@ -216,6 +217,7 @@ function fitLineToWidth(line: string, width: number): string {
 export class AdvisorPanelView implements Component {
   readonly #base64Image: string;
   readonly #imageMimeType: "image/png" | "image/jpeg";
+  readonly #imageKey: string;
   #note: AdvisorNote | undefined;
   #image: Image | undefined;
   #cachedLines: readonly string[] | undefined;
@@ -232,6 +234,7 @@ export class AdvisorPanelView implements Component {
   constructor(base64Image: string, options: AdvisorPanelViewOptions = {}) {
     this.#base64Image = base64Image;
     this.#imageMimeType = options.imageMimeType ?? "image/png";
+    this.#imageKey = options.imageKey ?? "advisor-character";
     this.#note = options.initialNote;
     this.#imageBudget = options.imageBudget;
     this.#imageMaxWidth = normalizeViewCap(options.imageMaxWidth, 20, 8, 40);
@@ -318,7 +321,7 @@ export class AdvisorPanelView implements Component {
           {
             maxWidthCells: this.#imageMaxWidth,
             maxHeightCells: this.#imageMaxHeight,
-            imageKey: "advisor-character",
+            imageKey: this.#imageKey,
             budget: this.#imageBudget,
           },
         );

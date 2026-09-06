@@ -6,13 +6,29 @@ export interface AdvisorNote {
   advisor?: string;
 }
 
-export type AdvisorCommand = "on" | "off" | "toggle" | "status";
+export type AdvisorFace = "default" | AdvisorSeverity;
+export interface AdvisorFaceCommand {
+  kind: "face";
+  face: AdvisorFace;
+}
+export type AdvisorCommand = "on" | "off" | "toggle" | "status" | AdvisorFaceCommand;
 
 const validSeverities = new Set<AdvisorSeverity>(["nit", "concern", "blocker"]);
+const validFaces: Record<AdvisorFace, true> = {
+  default: true,
+  nit: true,
+  concern: true,
+  blocker: true,
+};
 
-/** Recognize only the built-in Advisor's exact, trimmed command spellings. */
+/** Recognize only the built-in Advisor and companion preview commands. */
 export function parseAdvisorCommand(text: string): AdvisorCommand | undefined {
-  switch (text.trim()) {
+  const trimmed = text.trim();
+  const face = trimmed.startsWith("/advisor face ") ? trimmed.slice("/advisor face ".length) : "";
+  if (validFaces[face as AdvisorFace] === true) {
+    return { kind: "face", face: face as AdvisorFace };
+  }
+  switch (trimmed) {
     case "/advisor on":
       return "on";
     case "/advisor off":
