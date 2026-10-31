@@ -232,6 +232,8 @@ bun test
 bun run build
 ```
 
+This repository's development and build toolchain is Bun, not Node.js: tests use `bun:test`, the image conversion path uses `Bun.Image`, and the build targets Bun. The installed extension runs inside the OMP host process, so Node.js 26 is not a standalone runtime baseline for this project; OMP determines the host runtime.
+
 To work from a local checkout:
 
 ```sh
